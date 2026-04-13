@@ -97,9 +97,13 @@
                         </h3>
                     </div>
                     <div class="flex gap-3">
+                        <button id="btn-delete-selected"
+                            class="bg-orange-50 text-orange-500 border border-orange-200 px-5 py-3 rounded-xl text-sm font-bold hover:bg-orange-100 transition-colors hidden">
+                            🗑 선택 삭제
+                        </button>
                         <button id="btn-clear"
                             class="bg-red-50 text-red-500 border border-red-100 px-5 py-3 rounded-xl text-sm font-bold hover:bg-red-100 transition-colors">
-                            🗑 전체 초기화
+                            전체 초기화
                         </button>
                         <button id="btn-download"
                             class="bg-[#4a6cf7] text-white px-7 py-3 rounded-xl text-sm font-bold shadow-lg hover:bg-blue-700 transition-colors">
@@ -142,8 +146,8 @@
         const DB_KEY = 'est_final_master_db';
         const SESSION_KEY = 'est_auth';
         const COLUMNS = [
-            "No.", "이름", "생년(만나이)", "성별", "최종학력",
-            "최종학교", "전공", "총 경력", "최종회사",
+            "☑", "No.", "이름", "생년(만나이)", "성별", "최종학력",
+            "최종학교", "전공", "총 경력", "재직상태", "최종회사",
             "면접상태", "이력서", "적합도", "평가", "근거"
         ];
 
@@ -154,6 +158,57 @@
         // ──────────────────────────────────────────────
         function saveData() {
             localStorage.setItem(DB_KEY, JSON.stringify(results));
+        }
+
+        // 경력 문자열 → 총 개월 수 파싱 ("10년 2개월", "3년", "8개월", "신입" 등)
+        function parseExpMonths(str) {
+            if (!str) return 0;
+            const s = str.replace(/\s/g, '');
+            let months = 0;
+            const y = s.match(/(\d+)년/); if (y) months += parseInt(y[1]) * 12;
+            const m = s.match(/(\d+)개월/); if (m) months += parseInt(m[1]);
+            return months;
+        }
+        function formatExp(months) {
+            if (months === 0) return '신입';
+            const y = Math.floor(months / 12), m = months % 12;
+            return y > 0 && m > 0 ? `${y}년 ${m}개월` : y > 0 ? `${y}년` : `${m}개월`;
+        }
+
+        // 최종회사 텍스트 → 재직상태 뱃지
+        function statusBadge(company, exp) {
+            const c = (company || '').toLowerCase();
+            if (!company || company === '-' || company === '') {
+                if ((exp || '').includes('신입') || (exp || '').includes('재학')) {
+                    return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-100 text-blue-600">신입</span>';
+                }
+                return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-gray-100 text-gray-400">미확인</span>';
+            }
+            if (c.includes('재직중') || c.includes('재직')) {
+                return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-green-100 text-green-700">🟢 재직중</span>';
+            }
+            if (c.includes('퇴직') || c.includes('이직') || c.includes('퇴사')) {
+                return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-red-600">🔴 퇴직</span>';
+            }
+            // 괄호 없으면 퇴직으로 처리
+            return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-gray-100 text-gray-500">🔴 퇴직</span>';
+        }
+
+        // 선택 삭제
+        function deleteSelected() {
+            const checked = Array.from(document.querySelectorAll('.row-check:checked'))
+                .map(cb => parseInt(cb.dataset.index));
+            if (checked.length === 0) return;
+            if (!confirm(`선택한 ${checked.length}명을 삭제하시겠습니까?`)) return;
+            results = results.filter((_, i) => !checked.includes(i));
+            saveData();
+            renderTable();
+        }
+
+        // 체크박스 상태에 따라 선택삭제 버튼 토글
+        function updateDeleteBtn() {
+            const any = document.querySelectorAll('.row-check:checked').length > 0;
+            document.getElementById('btn-delete-selected').classList.toggle('hidden', !any);
         }
 
         // ──────────────────────────────────────────────
@@ -225,6 +280,7 @@
             document.getElementById('btn-analyze').onclick = startAnalysis;
             document.getElementById('btn-download').onclick = downloadXLSX;
             document.getElementById('btn-clear').onclick = clearAllData;
+            document.getElementById('btn-delete-selected').onclick = deleteSelected;
         });
 
         // ──────────────────────────────────────────────
@@ -346,7 +402,15 @@
         // ──────────────────────────────────────────────
         function renderHead() {
             document.getElementById('table-head').innerHTML =
-                `<tr>${COLUMNS.map(c => `<th class="p-4 text-[10px] uppercase tracking-wider">${c}</th>`).join('')}</tr>`;
+                `<tr>${COLUMNS.map((c, i) => i === 0
+                    ? `<th class="p-4 text-[10px]"><input type="checkbox" id="check-all" class="cursor-pointer"></th>`
+                    : `<th class="p-4 text-[10px] uppercase tracking-wider">${c}</th>`
+                ).join('')}</tr>`;
+            // 전체선택
+            document.getElementById('check-all').addEventListener('change', function() {
+                document.querySelectorAll('.row-check').forEach(cb => cb.checked = this.checked);
+                updateDeleteBtn();
+            });
         }
 
         function renderTable() {
@@ -362,8 +426,14 @@
                 return;
             }
 
+            // 전체 경력 합산 표시
+            const totalMonths = results.reduce((sum, r) => sum + parseExpMonths(r['총 경력']), 0);
+
             body.innerHTML = results.map((r, i) => `
                 <tr class="hover:bg-blue-50/40 transition-colors border-b border-gray-50 font-medium text-gray-700" data-index="${i}">
+                    <td class="text-center px-2">
+                        <input type="checkbox" class="row-check cursor-pointer" data-index="${i}">
+                    </td>
                     <td class="text-gray-400 font-semibold text-center">${results.length - i}</td>
                     <td class="cell-name py-4 px-6 text-left">${r['이름']}</td>
                     <td class="text-blue-700 font-black text-center">${r['생년(만나이)']}</td>
@@ -371,8 +441,20 @@
                     <td class="text-center">${r['최종학력']}</td>
                     <td class="cell-school px-6 text-left">${r['최종학교']}</td>
                     <td class="text-blue-600 font-black text-[10px] px-6 text-left whitespace-pre-line">${r['전공']}</td>
-                    <td class="font-bold text-gray-700 text-center">${r['총 경력']}</td>
-                    <td class="font-extrabold text-gray-900 text-left px-6">${r['최종회사']}</td>
+                    <!-- 총 경력: 인라인 수정 가능 -->
+                    <td class="text-center px-2">
+                        <input type="text"
+                            class="border rounded px-2 py-1 text-[10px] w-24 bg-white outline-none focus:ring-1 ring-blue-500 exp-input"
+                            data-index="${i}" value="${(r['총 경력'] || '').replace(/"/g, '&quot;')}" placeholder="경력 입력">
+                    </td>
+                    <!-- 재직상태 자동 뱃지 -->
+                    <td class="text-center px-2">${statusBadge(r['최종회사'], r['총 경력'])}</td>
+                    <!-- 최종회사: 인라인 수정 가능 -->
+                    <td class="text-left px-3">
+                        <input type="text"
+                            class="border rounded px-2 py-1 text-[10px] w-36 bg-white outline-none focus:ring-1 ring-blue-500 company-input"
+                            data-index="${i}" value="${(r['최종회사'] || '').replace(/"/g, '&quot;')}" placeholder="회사명 입력">
+                    </td>
 
                     <!-- 면접상태: 변경 즉시 localStorage 저장 -->
                     <td class="text-center">
@@ -408,9 +490,15 @@
                     </td>
                 </tr>`).join('');
 
-            // ── 이벤트 위임 방식으로 변경 사항 저장 ──
+            // count 영역에 경력 합산 추가
+            const countEl = document.getElementById('count');
+            countEl.parentElement.innerHTML = `총 <span class="text-blue-600 font-black text-xl">${results.length}</span>명의 데이터 누적
+                <span class="text-xs text-gray-400 ml-3">전체 경력 합산 <span class="text-indigo-600 font-bold">${formatExp(totalMonths)}</span></span>`;
+
+            // ── 이벤트 위임: change (select류 + 체크박스) ──
             body.addEventListener('change', function(e) {
                 const idx = parseInt(e.target.dataset.index);
+                if (e.target.classList.contains('row-check')) { updateDeleteBtn(); return; }
                 if (isNaN(idx)) return;
                 if (e.target.classList.contains('interview-select')) {
                     results[idx]['면접상태'] = e.target.value;
@@ -420,11 +508,20 @@
                     results[idx]['적합도'] = e.target.value;
                     saveData();
                 }
-            }, { once: true });
+            });
 
+            // ── 이벤트 위임: blur (input류) ──
             body.addEventListener('blur', function(e) {
                 const idx = parseInt(e.target.dataset.index);
                 if (isNaN(idx)) return;
+                if (e.target.classList.contains('exp-input')) {
+                    results[idx]['총 경력'] = e.target.value;
+                    saveData();
+                }
+                if (e.target.classList.contains('company-input')) {
+                    results[idx]['최종회사'] = e.target.value;
+                    saveData();
+                }
                 if (e.target.classList.contains('eval-input')) {
                     results[idx]['평가'] = e.target.value;
                     saveData();
