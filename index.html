@@ -1,221 +1,833 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EST FAMILY - 채용 분석 시스템</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-weight='900' fill='%234a6cf7'>E</text></svg>">
-    
-    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+import { useState, useRef } from "react"; 
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:ital,wght@1,900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; }
-        .font-est { font-family: 'Montserrat', sans-serif; letter-spacing: -0.05em; font-style: italic; }
-        .hidden { display: none !important; }
-        .active-nav { background-color: rgba(255,255,255,0.15); color: #ffffff; font-weight: 800; border-left: 4px solid #ffffff; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 11px; min-width: 2400px; table-layout: fixed; }
-        th, td { padding: 14px 12px; text-align: center; border-bottom: 1px solid #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        th { background-color: #f8fafc; color: #64748b; font-weight: 700; position: sticky; top: 0; z-index: 10; text-transform: uppercase; }
-        .col-name { width: 150px; text-align: left; font-weight: 800; color: #1d4ed8; text-decoration: underline; cursor: pointer; }
-        input[type="text"] { width: 100%; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 11px; outline: none; transition: border-color 0.2s; }
-        input[type="text"]:focus { border-color: #4a6cf7; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 80% { transform: translateX(5px); } }
-        .shake { animation: shake 0.4s ease; }
-    </style>
-</head>
-<body>
-    <div id="login-screen" class="h-screen flex items-center justify-center bg-gradient-to-br from-[#1e3a8a] to-[#3b82f6]">
-        <div class="bg-white/95 backdrop-blur-xl p-10 rounded-[2.5rem] shadow-2xl w-full max-w-[420px] text-center">
-            <div class="mb-8">
-                <div class="w-20 h-20 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <span class="text-white text-4xl font-est">E</span>
-                </div>
-            </div>
-            <h1 class="text-3xl font-est font-black text-gray-900 mb-2 uppercase italic">EST FAMILY</h1>
-            <p class="text-gray-500 mb-10 font-medium">AI Resume Analysis System</p>
-            <input type="password" id="pw-input" class="w-full bg-gray-50 border-2 border-gray-100 p-5 rounded-2xl outline-none text-center font-bold text-xl mb-4 focus:border-blue-500 transition-all" placeholder="Security Code" autocomplete="off">
-            <button onclick="window.handleAuth()" class="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-600 transition-all">ACCESS SYSTEM</button>
-        </div>
-    </div>
+import * as XLSX from "xlsx"; 
 
-    <div id="main-app" class="hidden min-h-screen flex">
-        <aside class="w-64 bg-gray-900 text-white flex flex-col shrink-0 shadow-2xl z-20 font-bold">
-            <div class="p-8 border-b border-white/5 text-center">
-                <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-est text-2xl mx-auto mb-3 shadow-lg">E</div>
-                <h1 class="text-xl font-est font-black italic uppercase tracking-tighter">EST FAMILY</h1>
-            </div>
-            <nav class="flex-1 p-4 space-y-2">
-                <button onclick="window.switchView('upload')" id="tab-upload" class="w-full text-left p-3 rounded-xl text-sm opacity-60 hover:opacity-100 flex items-center gap-3 transition-all">📁 이력서 업로드</button>
-                <button onclick="window.switchView('result')" id="tab-result" class="w-full text-left p-3 rounded-xl text-sm active-nav flex items-center gap-3 transition-all">📊 분석 결과 리스트</button>
-            </nav>
-            <div class="p-4 border-t border-white/5"><button onclick="location.reload()" class="w-full text-left p-3 text-xs opacity-40 text-white">🚪 로그아웃</button></div>
-        </aside>
+  
 
-        <main class="flex-1 flex flex-col overflow-hidden bg-[#f8fafc]">
-            <header class="bg-white border-b border-gray-100 p-5 px-10 flex justify-between items-center shadow-sm">
-                <h2 id="header-title" class="font-est font-black text-gray-900 text-xl tracking-tight uppercase">Analysis Report</h2>
-                <div class="px-4 py-1.5 bg-emerald-50 rounded-full border border-emerald-100 flex items-center gap-2 font-black text-[10px] text-emerald-700 uppercase tracking-widest">
-                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Operational
-                </div>
-            </header>
+// ── 상수 ────────────────────────────────────────────── 
 
-            <div id="view-result" class="p-8 flex-1 overflow-auto">
-                <div class="flex justify-between items-center mb-6 bg-white p-6 rounded-2xl border shadow-sm">
-                    <h3 id="count-bar" class="font-bold text-gray-900 text-lg tracking-tight">총 <span id="count-num" class="text-blue-600 font-black">0</span>명의 데이터 누적</h3>
-                    <div class="flex gap-3">
-                        <button id="btn-delete" onclick="window.deleteSelected()" class="bg-orange-50 text-orange-600 px-5 py-2.5 rounded-xl text-sm font-bold hidden border border-orange-100">🗑 선택 삭제</button>
-                        <button onclick="window.downloadXLSX()" class="bg-blue-600 text-white px-7 py-2.5 rounded-xl text-sm font-bold shadow-lg">⬇ XLSX 다운로드</button>
-                    </div>
-                </div>
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto"><table id="result-table"><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div>
-                </div>
-            </div>
+const CLAUDE_MODEL = "claude-sonnet-4-20250514"; 
 
-            <div id="view-upload" class="hidden p-8 max-w-4xl mx-auto w-full text-center">
-                <div class="bg-white p-20 rounded-[2.5rem] border-4 border-dashed border-gray-100 cursor-pointer hover:border-blue-400 transition-all shadow-sm" onclick="window.triggerUpload()">
-                    <div class="text-6xl mb-6">📂</div>
-                    <p class="text-2xl text-gray-900 font-black mb-2 tracking-tight">분석할 서류를 선택하세요</p>
-                    <p class="text-gray-400 text-sm font-medium italic">이력서 본문의 학교, 경력, 재직상태를 정밀 분석합니다</p>
-                    <input type="file" id="file-input" class="hidden" multiple accept=".pdf,.docx,.txt" onchange="window.handleFileSelect(this)">
-                </div>
-                <div id="selected-files" class="grid grid-cols-2 gap-3 mt-6 text-xs font-bold text-blue-600"></div>
-                <button id="btn-analyze" onclick="window.startAnalysis()" class="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-xl mt-6 shadow-xl opacity-30 cursor-not-allowed" disabled>AI 정밀 분석 시작</button>
-            </div>
-        </main>
-    </div>
+const DEFAULT_PW = "estsoft2024"; 
 
-    <script>
-        const VALID_PW = "estsoft2024";
-        const DB_KEY = 'est_master_vfinal_200';
-        const fileStore = new Map(); 
-        let results = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+const ADMIN_PW = "admin1234"; 
 
-        window.handleAuth = () => {
-            const input = document.getElementById('pw-input');
-            if (input.value === VALID_PW) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                document.getElementById('main-app').style.display = 'flex';
-                renderHead(); renderTable();
-            } else {
-                input.value = ""; input.classList.add('shake');
-                setTimeout(() => input.classList.remove('shake'), 400);
-            }
-        };
+  
 
-        window.triggerUpload = () => { document.getElementById('file-input').click(); };
+const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접진행 여부", "이력서", "JD 적합도", "적합도 평가", "평가 근거"]; 
 
-        window.handleFileSelect = (input) => {
-            const files = Array.from(input.files);
-            document.getElementById('selected-files').innerHTML = files.map(f => `<div class="bg-white p-3 rounded-lg border shadow-sm">📄 ${f.name}</div>`).join('');
-            const btn = document.getElementById('btn-analyze');
-            btn.disabled = false; btn.style.opacity = "1";
-        };
+  
 
-        window.openResume = (name) => {
-            if (fileStore.has(name)) window.open(URL.createObjectURL(fileStore.get(name)), '_blank');
-            else alert("원본 파일을 찾을 수 없습니다.");
-        };
+const SCORE_LABELS = { 
 
-        async function getFileText(file) {
-            if (file.name.endsWith('.pdf')) {
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
-                let text = ''; for (let i = 1; i <= pdf.numPages; i++) { const page = await pdf.getPage(i); const content = await page.getTextContent(); text += content.items.map(s => s.str).join(' ') + '\n'; }
-                return text;
-            } else if (file.name.endsWith('.docx')) {
-                const res = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() }); return res.value;
-            }
-            return "";
-        }
+  1: { label: "매우 부적합", sub: "직무 요건과 거의 일치하지 않음", color: "#dc2626", bg: "#fef2f2", border: "#fecaca" }, 
 
-        window.startAnalysis = async () => {
-            const btn = document.getElementById('btn-analyze');
-            const files = Array.from(document.getElementById('file-input').files);
-            btn.innerText = "데이터 분석 중..."; btn.disabled = true;
+  2: { label: "부적합", sub: "일부 요건 충족, 보완 필요", color: "#ea580c", bg: "#fff7ed", border: "#fed7aa" }, 
 
-            for (let f of files) {
-                const text = await getFileText(f);
-                
-                // [수정된 이름 추출 로직] 본문 최상단에서 실명을 먼저 찾도록 패턴 개선 
-                let name = (text.trim().match(/^[가-힣]{2,4}/) || [])[0] || (text.match(/(?:채종현|안대근|오수빈)/) || [])[0] || (text.match(/(?:성명|이름)\s*[:：\|]?\s*([가-힣]{2,5})/) || [])[1] || f.name.match(/[가-힣]{2,4}/)?.[0] || "미상";
-                fileStore.set(name, f);
+  3: { label: "보통", sub: "기본 요건 충족, 추가 검토 필요", color: "#b45309", bg: "#fefce8", border: "#fde68a" }, 
 
-                let school = "미상", major = "미상", exp = "미확인", company = "미상", isWorking = false;
-                
-                // 채종현 데이터 정밀 매칭 [cite: 7, 59, 94, 95]
-                if (text.includes("한국교통대학교") || f.name.includes("채종현")) {
-                    school = "한국교통대학교"; major = "생명공학과"; exp = "6년 9개월"; company = "트리노드";
-                    isWorking = text.includes("재직") || text.includes("현재");
-                } else if (text.includes("한국사이버평생교육원")) {
-                    school = "한국사이버평생교육원"; major = "경영학과"; exp = "10년 2개월"; company = "그립컴퍼니";
-                }
+  4: { label: "적합 · Outreach 권장", sub: "직무 요건 충족, 적극 접촉 권장", color: "#15803d", bg: "#f0fdf4", border: "#86efac" }, 
 
-                results.unshift({
-                    '이름': name, '생년(만나이)': '1990년생 (만 36세)', '성별': '남', '최종학력': '졸업',
-                    '최종학교': school, '전공': major, '총 경력': exp,
-                    '재직상태': isWorking ? '🟢 재직중' : '🔴 퇴직', '최종회사': company,
-                    '면접상태': '미정', '적합도': '—', '평가': '', '근거': ''
-                });
-            }
-            localStorage.setItem(DB_KEY, JSON.stringify(results));
-            btn.innerText = "AI 정밀 분석 시작"; btn.disabled = false;
-            renderTable(); window.switchView('result');
-        };
+  5: { label: "매우 적합 · Outreach 권장", sub: "직무 요건에 탁월히 부합", color: "#1d4ed8", bg: "#eff6ff", border: "#93c5fd" }, 
 
-        window.switchView = (v) => {
-            document.getElementById('view-upload').classList.toggle('hidden', v !== 'upload');
-            document.getElementById('view-result').classList.toggle('hidden', v !== 'result');
-            document.getElementById('tab-upload').classList.toggle('active-nav', v === 'upload');
-            document.getElementById('tab-result').classList.toggle('active-nav', v === 'result');
-        };
+}; 
 
-        const COLUMNS = [
-            { title: "☑", class: "w-[45px]" }, { title: "No.", class: "w-[55px]" }, { title: "이름", class: "col-name" },
-            { title: "생년(만나이)", class: "w-[180px]" }, { title: "성별", class: "w-[100px]" }, { title: "최종학력", class: "w-[100px]" },
-            { title: "최종학교", class: "w-[200px]" }, { title: "전공", class: "w-[200px]" }, { title: "총 경력", class: "w-[120px]" },
-            { title: "재직상태", class: "w-[100px]" }, { title: "최종회사", class: "w-[220px]" }, { title: "면접상태", class: "w-[115px]" },
-            { title: "경력기술서", class: "w-[120px]" }, { title: "포트폴리오", class: "w-[120px]" },
-            { title: "적합도", class: "w-[110px]" }, { title: "평가", class: "w-[180px]" }, { title: "근거", class: "w-[180px]" }
-        ];
+  
 
-        function renderHead() { document.getElementById('table-head').innerHTML = `<tr>${COLUMNS.map(c => `<th class="p-4 ${c.class}">${c.title}</th>`).join('')}</tr>`; }
-        function renderTable() {
-            const body = document.getElementById('table-body');
-            document.getElementById('count-num').innerText = results.length;
-            body.innerHTML = results.map((r, i) => `
-                <tr class="hover:bg-blue-50/40 border-b border-gray-50 transition-colors">
-                    <td><input type="checkbox" class="row-check" onchange="updateDeleteBtn()"></td>
-                    <td class="text-gray-400 font-bold">${results.length - i}</td>
-                    <td class="col-name px-6" onclick="window.openResume('${r['이름']}')">${r['이름']}</td>
-                    <td><input type="text" value="${r['생년(만나이)']}" onblur="updateVal(${i},'생년(만나이)',this.value)"></td>
-                    <td><input type="text" value="${r['성별']}" onblur="updateVal(${i},'성별',this.value)"></td>
-                    <td><input type="text" value="${r['최종학력']}" onblur="updateVal(${i},'최종학력',this.value)"></td>
-                    <td><input type="text" value="${r['최종학교']}" onblur="updateVal(${i},'최종학교',this.value)"></td>
-                    <td><input type="text" value="${r['전공']}" onblur="updateVal(${i},'전공',this.value)"></td>
-                    <td><input type="text" value="${r['총 경력']}" onblur="updateVal(${i},'총 경력',this.value)"></td>
-                    <td class="font-black text-[9px]">${r['재직상태']}</td>
-                    <td><input type="text" value="${r['최종회사']}" onblur="updateVal(${i},'최종회사',this.value)"></td>
-                    <td><select class="border rounded-xl text-[10px] w-full p-1"><option>미정</option><option>합격</option><option>불합격</option></select></td>
-                    <td><input type="file" class="text-[9px] w-full"></td>
-                    <td><input type="file" class="text-[9px] w-full"></td>
-                    <td><select class="border rounded-xl text-[10px] w-full font-bold text-blue-600 p-1"><option>—</option><option>적합</option><option>부적합</option></select></td>
-                    <td><input type="text" value="${r['평가']}" onblur="updateVal(${i},'평가',this.value)"></td>
-                    <td><input type="text" value="${r['근거']}" onblur="updateVal(${i},'근거',this.value)"></td>
-                </tr>`).join('');
-        }
+// ── Claude API ──────────────────────────────────────── 
 
-        function updateVal(i, k, v) { results[i][k] = v; localStorage.setItem(DB_KEY, JSON.stringify(results)); }
-        window.updateDeleteBtn = () => { document.getElementById('btn-delete').classList.toggle('hidden', document.querySelectorAll('.row-check:checked').length === 0); };
-        window.deleteSelected = () => { if(!confirm("삭제하시겠습니까?")) return; const checks = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => { const tr = cb.closest('tr'); return results.length - parseInt(tr.querySelector('td:nth-child(2)').innerText); }).sort((a,b)=>b-a); checks.forEach(idx => results.splice(idx, 1)); localStorage.setItem(DB_KEY, JSON.stringify(results)); renderTable(); window.updateDeleteBtn(); };
-        window.downloadXLSX = () => { const ws = XLSX.utils.json_to_sheet(results); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "HR_Data"); XLSX.writeFile(wb, `EST_HR_Report_${new Date().toISOString().slice(0,10)}.xlsx`); };
-        
-        window.onkeydown = (e) => { if(e.key === 'Enter' && !document.getElementById('login-screen').classList.contains('hidden')) window.handleAuth(); };
-    </script>
-</body>
-</html>
+async function callClaude(messages, systemPrompt) { 
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", { 
+
+    method: "POST", 
+
+    headers: { "Content-Type": "application/json" }, 
+
+    body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: 1000, system: systemPrompt, messages }), 
+
+  }); 
+
+  const data = await res.json(); 
+
+  return data.content?.map(b => b.text || "").join("") || ""; 
+
+} 
+
+  
+
+function readFileAsBase64(file) { 
+
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); }); 
+
+} 
+
+function readFileAsText(file) { 
+
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsText(file); }); 
+
+} 
+
+  
+
+// ── 공통 스타일 ─────────────────────────────────────── 
+
+const C = { 
+
+  blue: "#1d4ed8", blueDark: "#1e3a8a", blueLight: "#eff6ff", 
+
+  gray50: "#f9fafb", gray100: "#f3f4f6", gray200: "#e5e7eb", 
+
+  gray400: "#9ca3af", gray600: "#4b5563", gray800: "#1f2937", 
+
+  white: "#ffffff", border: "1px solid #e5e7eb", 
+
+  shadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)", 
+
+  shadowMd: "0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06)", 
+
+}; 
+
+  
+
+const btn = (variant = "primary") => ({ 
+
+  border: "none", borderRadius: 6, fontWeight: 600, fontSize: 14, 
+
+  cursor: "pointer", padding: "9px 20px", transition: "opacity .15s", 
+
+  ...(variant === "primary" ? { background: C.blue, color: C.white } : 
+
+     variant === "danger"  ? { background: "#dc2626", color: C.white } : 
+
+     variant === "ghost"   ? { background: C.gray100, color: C.gray800, border: C.border } : {}), 
+
+}); 
+
+  
+
+const input = { border: C.border, borderRadius: 6, padding: "9px 12px", fontSize: 14, outline: "none", width: "100%", boxSizing: "border-box", fontFamily: "inherit", color: C.gray800, background: C.white }; 
+
+const card = { background: C.white, borderRadius: 8, boxShadow: C.shadow, border: C.border, padding: 24, marginBottom: 20 }; 
+
+  
+
+// ── 서브컴포넌트 ────────────────────────────────────── 
+
+function ScoreBadge({ score }) { 
+
+  if (!score) return <span style={{ color: C.gray400, fontSize: 13 }}>—</span>; 
+
+  const n = Math.round(parseFloat(score)); 
+
+  const colors = { 1: "#dc2626", 2: "#ea580c", 3: "#b45309", 4: "#15803d", 5: C.blue }; 
+
+  const c = colors[Math.min(Math.max(n, 1), 5)]; 
+
+  return <span style={{ background: c, color: "#fff", borderRadius: 20, padding: "3px 11px", fontWeight: 700, fontSize: 12, letterSpacing: .3 }}>★ {score} / 5</span>; 
+
+} 
+
+  
+
+function ScoreLabel({ score }) { 
+
+  if (!score) return <span style={{ color: C.gray400, fontSize: 13 }}>—</span>; 
+
+  const n = Math.min(Math.max(Math.round(parseFloat(score)), 1), 5); 
+
+  const info = SCORE_LABELS[n]; 
+
+  return ( 
+
+    <div style={{ background: info.bg, border: `1px solid ${info.border}`, borderRadius: 6, padding: "5px 10px", minWidth: 170 }}> 
+
+      <div style={{ color: info.color, fontWeight: 700, fontSize: 12 }}>{info.label}</div> 
+
+      <div style={{ color: C.gray600, fontSize: 11, marginTop: 2 }}>{info.sub}</div> 
+
+    </div> 
+
+  ); 
+
+} 
+
+  
+
+function Sidebar({ activeTab, setActiveTab, onLock }) { 
+
+  const items = [ 
+
+    { id: "upload", icon: "⬆", label: "업로드 & 설정" }, 
+
+    { id: "result", icon: "📊", label: "분석 결과" }, 
+
+    { id: "admin",  icon: "⚙", label: "관리자 설정" }, 
+
+  ]; 
+
+  return ( 
+
+    <div style={{ width: 220, minHeight: "100vh", background: C.blueDark, display: "flex", flexDirection: "column", flexShrink: 0 }}> 
+
+      <div style={{ padding: "20px 20px 18px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}> 
+
+        <div style={{ display: "flex", alignItems: "center", gap: 0, lineHeight: 1 }}> 
+
+          <span style={{ color: "#fff", fontWeight: 900, fontSize: 22, letterSpacing: -1, fontFamily: "'Arial Black', 'Helvetica Neue', sans-serif" }}>EST</span> 
+
+          <span style={{ color: "rgba(255,255,255,0.75)", fontWeight: 600, fontSize: 14, letterSpacing: 3, marginLeft: 5, fontFamily: "'Arial', sans-serif", textTransform: "uppercase" }}>FAMILY</span> 
+
+        </div> 
+
+        <div style={{ color: "rgba(255,255,255,.4)", fontSize: 10, marginTop: 7, letterSpacing: .5 }}>채용 이력서 분석 시스템</div> 
+
+      </div> 
+
+      <nav style={{ flex: 1, padding: "12px 10px" }}> 
+
+        {items.map(it => { 
+
+          const active = activeTab === it.id; 
+
+          return ( 
+
+            <button key={it.id} onClick={() => setActiveTab(it.id)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 6, border: "none", cursor: "pointer", marginBottom: 2, background: active ? "rgba(255,255,255,.12)" : "transparent", color: active ? "#fff" : "rgba(255,255,255,.6)", fontWeight: active ? 700 : 500, fontSize: 13, textAlign: "left", transition: "background .15s" }}> 
+
+              <span style={{ fontSize: 15 }}>{it.icon}</span>{it.label} 
+
+            </button> 
+
+          ); 
+
+        })} 
+
+      </nav> 
+
+      <div style={{ padding: "16px 10px" }}> 
+
+        <button onClick={onLock} style={{ ...btn("ghost"), width: "100%", background: "rgba(255,255,255,.08)", color: "rgba(255,255,255,.7)", border: "1px solid rgba(255,255,255,.15)", fontSize: 13 }}>🔒 잠금</button> 
+
+      </div> 
+
+    </div> 
+
+  ); 
+
+} 
+
+  
+
+// ── 메인 앱 ────────────────────────────────────────── 
+
+export default function App() { 
+
+  const [pw, setPw] = useState({ value: DEFAULT_PW, admin: ADMIN_PW }); 
+
+  const [auth, setAuth] = useState(null); // null | "user" | "admin" 
+
+  const [loginInput, setLoginInput] = useState(""); 
+
+  const [loginErr, setLoginErr] = useState(""); 
+
+  const [activeTab, setActiveTab] = useState("upload"); 
+
+  
+
+  // upload state 
+
+  const [files, setFiles] = useState([]); 
+
+  const [fileLinks, setFileLinks] = useState({}); 
+
+  const [jd, setJd] = useState(""); 
+
+  const [results, setResults] = useState([]); 
+
+  const [processing, setProcessing] = useState(false); 
+
+  const [progress, setProgress] = useState({ current: 0, total: 0, label: "" }); 
+
+  const fileRef = useRef(); 
+
+  
+
+  // admin state 
+
+  const [newPw, setNewPw] = useState(""); 
+
+  const [newAdminPw, setNewAdminPw] = useState(""); 
+
+  const [pwMsg, setPwMsg] = useState(""); 
+
+  
+
+  // ── 로그인 ── 
+
+  const handleLogin = () => { 
+
+    if (loginInput === pw.admin) { setAuth("admin"); setActiveTab("upload"); setLoginErr(""); } 
+
+    else if (loginInput === pw.value) { setAuth("user"); setActiveTab("upload"); setLoginErr(""); } 
+
+    else { setLoginErr("비밀번호가 올바르지 않습니다."); } 
+
+    setLoginInput(""); 
+
+  }; 
+
+  
+
+  if (!auth) return ( 
+
+    <div style={{ minHeight: "100vh", background: C.gray50, display: "flex", alignItems: "center", justifyContent: "center" }}> 
+
+      <div style={{ background: C.white, borderRadius: 10, boxShadow: C.shadowMd, border: C.border, padding: "44px 40px", width: 360 }}> 
+
+        <div style={{ textAlign: "center", marginBottom: 32 }}> 
+
+          <div style={{ width: 48, height: 48, background: C.blue, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 14px" }}>📋</div> 
+
+          <div style={{ fontWeight: 800, fontSize: 18, color: C.gray800 }}>채용 이력서 분석 시스템</div> 
+
+          <div style={{ color: C.gray400, fontSize: 13, marginTop: 6 }}>접근하려면 비밀번호를 입력하세요</div> 
+
+        </div> 
+
+        <div style={{ marginBottom: 12 }}> 
+
+          <label style={{ fontSize: 13, fontWeight: 600, color: C.gray600, display: "block", marginBottom: 6 }}>비밀번호</label> 
+
+          <input style={input} type="password" placeholder="비밀번호 입력" value={loginInput} onChange={e => setLoginInput(e.target.value)} onKeyDown={e => e.key === "Enter" && handleLogin()} /> 
+
+        </div> 
+
+        {loginErr && <div style={{ color: "#dc2626", fontSize: 13, marginBottom: 10 }}>{loginErr}</div>} 
+
+        <button style={{ ...btn("primary"), width: "100%", padding: "11px", fontSize: 15 }} onClick={handleLogin}>로그인</button> 
+
+        <div style={{ marginTop: 20, padding: 12, background: C.blueLight, borderRadius: 6, fontSize: 12, color: C.blue, lineHeight: 1.6 }}> 
+
+          🔒 이 시스템은 개인정보를 다루며, 모든 데이터는 세션 내에서만 처리되고 외부에 저장되지 않습니다. 
+
+        </div> 
+
+      </div> 
+
+    </div> 
+
+  ); 
+
+  
+
+  // ── 이력서 파싱 ── 
+
+  const parseResume = async (file, idx, total, jdText) => { 
+
+    setProgress({ current: idx, total, label: `${file.name} 분석 중...` }); 
+
+    try { 
+
+      let content; 
+
+      const isPdf = file.type === "application/pdf"; 
+
+      const sysPrompt = `당신은 이력서 분석 전문가입니다. 반드시 JSON만 반환하세요. 다른 텍스트 없이: 
+
+{"이름":"","생년(만나이)":"YYYY년생 (만 XX세)","성별":"남/여/미상","최종학력":"고졸/전문대졸/대졸/대학원졸","최종학교":"","전공":"","총 경력":"X년 X개월","최종회사":"","면접진행 여부":"미정"}`; 
+
+      if (isPdf) { 
+
+        const b64 = await readFileAsBase64(file); 
+
+        content = await callClaude([{ role: "user", content: [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } }, { type: "text", text: "위 이력서에서 정보를 추출해주세요." }] }], sysPrompt); 
+
+      } else { 
+
+        const text = await readFileAsText(file); 
+
+        content = await callClaude([{ role: "user", content: `이력서:\n${text.slice(0, 4000)}` }], sysPrompt); 
+
+      } 
+
+      const parsed = JSON.parse(content.replace(/```json|```/g, "").trim()); 
+
+      let score = null, reason = []; 
+
+      if (jdText.trim()) { 
+
+        setProgress({ current: idx, total, label: `${file.name} JD 적합도 평가 중...` }); 
+
+        const raw = await callClaude([{ role: "user", content: `JD:\n${jdText}\n\n후보자:\n${JSON.stringify(parsed)}\n\n적합도를 1~5점으로 평가하고, 핵심 근거 2가지를 JSON으로 반환하세요. 다른 텍스트 없이:\n{"score":"4.5","reasons":["근거1","근거2"]}` }], "채용 전문가입니다. 반드시 JSON만 반환하세요. 다른 텍스트 없이."); 
+
+        try { 
+
+          const parsed2 = JSON.parse(raw.replace(/```json|```/g, "").trim()); 
+
+          score = parsed2.score || null; 
+
+          reason = parsed2.reasons || []; 
+
+        } catch { score = raw.trim().match(/[\d.]+/)?.[0] || null; } 
+
+      } 
+
+      return { ...parsed, "JD 적합도": score, "평가 근거": reason, _file: file.name, _ok: true }; 
+
+    } catch (err) { 
+
+      return { 이름: file.name, _file: file.name, _ok: false }; 
+
+    } 
+
+  }; 
+
+  
+
+  const handleAnalyze = async () => { 
+
+    if (!files.length) return; 
+
+    setProcessing(true); setResults([]); setActiveTab("result"); 
+
+    const out = []; 
+
+    for (let i = 0; i < files.length; i++) { 
+
+      const r = await parseResume(files[i], i + 1, files.length, jd); 
+
+      r["이력서 링크"] = fileLinks[files[i].name] || ""; 
+
+      out.push(r); setResults([...out]); 
+
+    } 
+
+    setProgress({ current: files.length, total: files.length, label: "분석 완료" }); 
+
+    setProcessing(false); 
+
+  }; 
+
+  
+
+  const exportCSV = () => { 
+
+    const rows = results.map((r, i) => ({ 
+
+      "No.": i + 1, 
+
+      "이름": r["이름"] || "", 
+
+      "생년(만나이)": r["생년(만나이)"] || "", 
+
+      "성별": r["성별"] || "", 
+
+      "최종학력": r["최종학력"] || "", 
+
+      "최종학교": r["최종학교"] || "", 
+
+      "전공": r["전공"] || "", 
+
+      "총 경력": r["총 경력"] || "", 
+
+      "최종회사": r["최종회사"] || "", 
+
+      "면접진행 여부": r["면접진행 여부"] || "미정", 
+
+      "이력서": r["이력서 링크"] || "", 
+
+      "JD 적합도": r["JD 적합도"] ? `${r["JD 적합도"]}/5` : "-", 
+
+      "적합도 평가": r["JD 적합도"] ? SCORE_LABELS[Math.min(Math.max(Math.round(parseFloat(r["JD 적합도"])), 1), 5)].label : "-", 
+
+      "평가 근거": r["평가 근거"] ? r["평가 근거"].join(" / ") : "-", 
+
+    })); 
+
+    const ws = XLSX.utils.json_to_sheet(rows); 
+
+    const wb = XLSX.utils.book_new(); 
+
+    XLSX.utils.book_append_sheet(wb, ws, "이력서 분석결과"); 
+
+    XLSX.writeFile(wb, "이력서_분석결과.xlsx"); 
+
+  }; 
+
+  
+
+  const handleFiles = e => { setFiles(Array.from(e.target.files).slice(0, 10)); }; 
+
+  const handleDrop = e => { e.preventDefault(); setFiles(Array.from(e.dataTransfer.files).slice(0, 10)); }; 
+
+  
+
+  // ── 탭 컨텐츠 ── 
+
+  const renderUpload = () => ( 
+
+    <div> 
+
+      <div style={card}> 
+
+        <div style={{ fontWeight: 700, fontSize: 15, color: C.gray800, marginBottom: 16 }}>이력서 업로드 <span style={{ color: C.gray400, fontWeight: 400, fontSize: 13 }}>— 최대 10개 (PDF / TXT)</span></div> 
+
+        <div onDrop={handleDrop} onDragOver={e => e.preventDefault()} onClick={() => fileRef.current.click()} 
+
+          style={{ border: `2px dashed ${C.gray200}`, borderRadius: 8, padding: "36px 20px", textAlign: "center", cursor: "pointer", background: C.gray50 }}> 
+
+          <div style={{ fontSize: 32, marginBottom: 8 }}>📂</div> 
+
+          <div style={{ color: C.blue, fontWeight: 600, fontSize: 14 }}>클릭하거나 파일을 드래그하세요</div> 
+
+          <div style={{ color: C.gray400, fontSize: 12, marginTop: 4 }}>PDF, TXT 지원</div> 
+
+          <input ref={fileRef} type="file" multiple accept=".pdf,.txt" style={{ display: "none" }} onChange={handleFiles} /> 
+
+        </div> 
+
+        {files.length > 0 && ( 
+
+          <div style={{ marginTop: 16 }}> 
+
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.blue, marginBottom: 8, textTransform: "uppercase", letterSpacing: .5 }}>OneDrive 공유 링크 입력 (선택)</div> 
+
+            {files.map((f, i) => ( 
+
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: C.gray50, border: C.border, borderRadius: 6, marginBottom: 6 }}> 
+
+                <span style={{ fontSize: 14 }}>📄</span> 
+
+                <span style={{ fontSize: 13, minWidth: 140, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: C.gray800 }}>{f.name}</span> 
+
+                <span style={{ fontSize: 11, color: C.gray400, marginRight: 4 }}>{(f.size / 1024).toFixed(0)} KB</span> 
+
+                <input type="text" placeholder="OneDrive 링크 붙여넣기..." value={fileLinks[f.name] || ""} onChange={e => setFileLinks(p => ({ ...p, [f.name]: e.target.value }))} style={{ ...input, flex: 1, fontSize: 12, padding: "5px 10px" }} /> 
+
+                {fileLinks[f.name] && <a href={fileLinks[f.name]} target="_blank" rel="noreferrer" style={{ fontSize: 16 }}>🔗</a>} 
+
+              </div> 
+
+            ))} 
+
+          </div> 
+
+        )} 
+
+      </div> 
+
+  
+
+      <div style={card}> 
+
+        <div style={{ fontWeight: 700, fontSize: 15, color: C.gray800, marginBottom: 4 }}>직무 기술서 (JD) <span style={{ color: C.gray400, fontWeight: 400, fontSize: 13 }}>— 입력 시 적합도 자동 평가</span></div> 
+
+        <div style={{ color: C.gray400, fontSize: 12, marginBottom: 12 }}>입력하지 않으면 정보 추출만 진행됩니다.</div> 
+
+        <textarea value={jd} onChange={e => setJd(e.target.value)} placeholder="예) 마케팅 기획 3년 이상, SNS 운영 경험 필수..." 
+
+          style={{ ...input, height: 140, resize: "vertical", lineHeight: 1.6 }} /> 
+
+      </div> 
+
+  
+
+      <button onClick={handleAnalyze} disabled={!files.length || processing} 
+
+        style={{ ...btn("primary"), width: "100%", padding: "13px", fontSize: 15, opacity: (!files.length || processing) ? .5 : 1 }}> 
+
+        {processing ? "⏳ 분석 중..." : `AI 분석 시작 (${files.length}개 이력서)`} 
+
+      </button> 
+
+    </div> 
+
+  ); 
+
+  
+
+  const renderResult = () => ( 
+
+    <div> 
+
+      {processing && ( 
+
+        <div style={{ ...card, marginBottom: 20 }}> 
+
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}> 
+
+            <span style={{ fontWeight: 600, fontSize: 13, color: C.gray800 }}>{progress.label}</span> 
+
+            <span style={{ color: C.blue, fontWeight: 700, fontSize: 13 }}>{progress.current} / {progress.total}</span> 
+
+          </div> 
+
+          <div style={{ height: 6, background: C.gray100, borderRadius: 99 }}> 
+
+            <div style={{ height: "100%", width: `${(progress.current / (progress.total || 1)) * 100}%`, background: C.blue, borderRadius: 99, transition: "width .4s" }} /> 
+
+          </div> 
+
+        </div> 
+
+      )} 
+
+      {results.length > 0 && ( 
+
+        <> 
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}> 
+
+            <div style={{ fontWeight: 700, fontSize: 15, color: C.gray800 }}>총 {results.length}명 분석 완료</div> 
+
+            <button style={btn("primary")} onClick={exportCSV}>⬇ XLSX 다운로드</button> 
+
+          </div> 
+
+          <div style={{ overflowX: "auto", background: C.white, borderRadius: 8, boxShadow: C.shadow, border: C.border }}> 
+
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}> 
+
+              <thead> 
+
+                <tr style={{ background: C.gray50, borderBottom: `2px solid ${C.gray200}` }}> 
+
+                  {COLUMNS.map(c => <th key={c} style={{ padding: "11px 14px", textAlign: "left", fontWeight: 700, color: C.gray600, whiteSpace: "nowrap", fontSize: 12 }}>{c}</th>)} 
+
+                </tr> 
+
+              </thead> 
+
+              <tbody> 
+
+                {results.map((r, i) => ( 
+
+                  <tr key={i} style={{ borderBottom: `1px solid ${C.gray100}` }}> 
+
+                    <td style={{ padding: "10px 14px", color: C.gray400 }}>{i + 1}</td> 
+
+                    <td style={{ padding: "10px 14px", fontWeight: 600, color: C.gray800 }}>{r["이름"] || "—"}</td> 
+
+                    <td style={{ padding: "10px 14px", color: C.gray600 }}>{r["생년(만나이)"] || "—"}</td> 
+
+                    <td style={{ padding: "10px 14px", color: C.gray600 }}>{r["성별"] || "—"}</td> 
+
+                    <td style={{ padding: "10px 14px", color: C.gray600 }}>{r["최종학력"] || "—"}</td> 
+
+                    <td style={{ padding: "10px 14px", color: C.gray600 }}>{r["최종학교"] || "—"}</td> 
+
+                    <td style={{ padding: "10px 14px", color: C.gray600 }}>{r["전공"] || "—"}</td> 
+
+                    <td style={{ padding: "10px 14px", color: C.gray600 }}>{r["총 경력"] || "—"}</td> 
+
+                    <td style={{ padding: "10px 14px", color: C.gray600 }}>{r["최종회사"] || "—"}</td> 
+
+                    <td style={{ padding: "10px 14px" }}> 
+
+                      <select defaultValue="미정" style={{ border: C.border, borderRadius: 5, padding: "3px 8px", fontSize: 12, color: C.gray800, background: C.white }}> 
+
+                        {["미정", "진행 예정", "진행 중", "합격", "불합격"].map(v => <option key={v}>{v}</option>)} 
+
+                      </select> 
+
+                    </td> 
+
+                    <td style={{ padding: "10px 14px" }}> 
+
+                      {r["이력서 링크"] 
+
+                        ? <a href={r["이력서 링크"]} target="_blank" rel="noreferrer" style={{ color: C.blue, fontWeight: 600, fontSize: 12, textDecoration: "none" }}>🔗 열기</a> 
+
+                        : <span style={{ color: C.gray400, fontSize: 12 }}>—</span>} 
+
+                    </td> 
+
+                    <td style={{ padding: "10px 14px" }}><ScoreBadge score={r["JD 적합도"]} /></td> 
+
+                    <td style={{ padding: "10px 14px" }}><ScoreLabel score={r["JD 적합도"]} /></td> 
+
+                    <td style={{ padding: "10px 14px", minWidth: 220 }}> 
+
+                      {r["평가 근거"] && r["평가 근거"].length > 0 
+
+                        ? <ul style={{ margin: 0, paddingLeft: 16, color: C.gray600, fontSize: 12, lineHeight: 1.7 }}> 
+
+                            {r["평가 근거"].map((reason, ri) => <li key={ri}>{reason}</li>)} 
+
+                          </ul> 
+
+                        : <span style={{ color: C.gray400, fontSize: 12 }}>—</span>} 
+
+                    </td> 
+
+                  </tr> 
+
+                ))} 
+
+              </tbody> 
+
+            </table> 
+
+          </div> 
+
+        </> 
+
+      )} 
+
+      {!processing && results.length === 0 && ( 
+
+        <div style={{ textAlign: "center", padding: 80, color: C.gray400 }}> 
+
+          <div style={{ fontSize: 44 }}>📭</div> 
+
+          <div style={{ marginTop: 12, fontSize: 14 }}>업로드 탭에서 이력서를 올리고 분석을 시작해주세요.</div> 
+
+        </div> 
+
+      )} 
+
+    </div> 
+
+  ); 
+
+  
+
+  const renderAdmin = () => { 
+
+    if (auth !== "admin") return ( 
+
+      <div style={{ ...card, textAlign: "center", padding: 60 }}> 
+
+        <div style={{ fontSize: 36 }}>🔒</div> 
+
+        <div style={{ marginTop: 12, color: C.gray600, fontSize: 14 }}>관리자 계정으로 로그인해야 접근할 수 있습니다.</div> 
+
+      </div> 
+
+    ); 
+
+    return ( 
+
+      <div> 
+
+        <div style={card}> 
+
+          <div style={{ fontWeight: 700, fontSize: 15, color: C.gray800, marginBottom: 18 }}>⚙ 비밀번호 관리</div> 
+
+          <div style={{ marginBottom: 20 }}> 
+
+            <label style={{ fontSize: 13, fontWeight: 600, color: C.gray600, display: "block", marginBottom: 6 }}>일반 사용자 비밀번호 변경</label> 
+
+            <div style={{ display: "flex", gap: 8 }}> 
+
+              <input type="password" placeholder="새 비밀번호 입력" value={newPw} onChange={e => setNewPw(e.target.value)} style={{ ...input }} /> 
+
+              <button style={{ ...btn("primary"), whiteSpace: "nowrap" }} onClick={() => { if (newPw.length >= 6) { setPw(p => ({ ...p, value: newPw })); setNewPw(""); setPwMsg("✅ 일반 비밀번호가 변경되었습니다."); } else setPwMsg("⚠ 6자 이상 입력하세요."); }}>변경</button> 
+
+            </div> 
+
+          </div> 
+
+          <div style={{ marginBottom: 8 }}> 
+
+            <label style={{ fontSize: 13, fontWeight: 600, color: C.gray600, display: "block", marginBottom: 6 }}>관리자 비밀번호 변경</label> 
+
+            <div style={{ display: "flex", gap: 8 }}> 
+
+              <input type="password" placeholder="새 관리자 비밀번호 입력" value={newAdminPw} onChange={e => setNewAdminPw(e.target.value)} style={{ ...input }} /> 
+
+              <button style={{ ...btn("primary"), whiteSpace: "nowrap" }} onClick={() => { if (newAdminPw.length >= 6) { setPw(p => ({ ...p, admin: newAdminPw })); setNewAdminPw(""); setPwMsg("✅ 관리자 비밀번호가 변경되었습니다."); } else setPwMsg("⚠ 6자 이상 입력하세요."); }}>변경</button> 
+
+            </div> 
+
+          </div> 
+
+          {pwMsg && <div style={{ marginTop: 12, fontSize: 13, color: pwMsg.startsWith("✅") ? "#15803d" : "#dc2626", fontWeight: 600 }}>{pwMsg}</div>} 
+
+        </div> 
+
+        <div style={{ ...card, background: C.blueLight, border: `1px solid #bfdbfe` }}> 
+
+          <div style={{ fontWeight: 700, fontSize: 14, color: C.blue, marginBottom: 10 }}>🔒 보안 안내</div> 
+
+          <ul style={{ margin: 0, paddingLeft: 18, color: C.gray600, fontSize: 13, lineHeight: 2 }}> 
+
+            <li>모든 이력서 데이터는 브라우저 세션 내에서만 처리되며 외부 서버에 저장되지 않습니다.</li> 
+
+            <li>페이지를 새로고침하면 세션이 초기화되고 재로그인이 필요합니다.</li> 
+
+            <li>Claude AI API 호출 시 이력서 내용이 분석 목적으로만 전송됩니다.</li> 
+
+            <li>비밀번호는 정기적으로 변경하시길 권장합니다.</li> 
+
+          </ul> 
+
+        </div> 
+
+      </div> 
+
+    ); 
+
+  }; 
+
+  
+
+  // ── 레이아웃 ── 
+
+  return ( 
+
+    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", background: C.gray50 }}> 
+
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLock={() => setAuth(null)} /> 
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" }}> 
+
+        {/* 상단바 */} 
+
+        <div style={{ background: C.white, borderBottom: C.border, padding: "14px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: C.shadow }}> 
+
+          <div> 
+
+            <div style={{ fontWeight: 700, fontSize: 15, color: C.gray800 }}> 
+
+              {activeTab === "upload" && "업로드 & 설정"} 
+
+              {activeTab === "result" && "분석 결과"} 
+
+              {activeTab === "admin" && "관리자 설정"} 
+
+            </div> 
+
+            <div style={{ fontSize: 12, color: C.gray400, marginTop: 2 }}>채용 이력서 분석 시스템</div> 
+
+          </div> 
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}> 
+
+            <div style={{ width: 8, height: 8, background: "#22c55e", borderRadius: "50%" }} /> 
+
+            <span style={{ fontSize: 12, color: C.gray600, fontWeight: 600 }}>{auth === "admin" ? "관리자" : "일반 사용자"}</span> 
+
+          </div> 
+
+        </div> 
+
+        {/* 콘텐츠 */} 
+
+        <div style={{ flex: 1, padding: "28px 32px", maxWidth: 1100, width: "100%", boxSizing: "border-box" }}> 
+
+          {activeTab === "upload" && renderUpload()} 
+
+          {activeTab === "result" && renderResult()} 
+
+          {activeTab === "admin" && renderAdmin()} 
+
+        </div> 
+
+      </div> 
+
+    </div> 
+
+  ); 
+
+} 
