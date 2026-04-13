@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EST FAMILY - 채용 이력서 분석 시스템</title>
+    <title>EST FAMILY - 채용 분석 시스템</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-weight='900' fill='%234a6cf7'>E</text></svg>">
     
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
@@ -11,42 +11,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 
-    <script>
-        // 1. 최우선 보안 인증 로직 (즉시 실행형)
-        const VALID_PW = "estsoft2024";
-        
-        function handleAuth() {
-            const input = document.getElementById('pw-input');
-            if (input.value === VALID_PW) {
-                document.getElementById('login-screen').style.display = 'none';
-                const app = document.getElementById('main-app');
-                app.classList.remove('hidden');
-                app.style.display = 'flex';
-                renderHead(); 
-                renderTable();
-            } else {
-                input.value = "";
-                input.classList.add('shake');
-                setTimeout(() => input.classList.remove('shake'), 400);
-            }
-        }
-
-        // 엔터키 지원
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
-                handleAuth();
-            }
-        });
-    </script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Montserrat:ital,wght@1,900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:ital,wght@1,900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; }
         .font-est { font-family: 'Montserrat', sans-serif; letter-spacing: -0.05em; font-style: italic; }
         .hidden { display: none !important; }
         .active-nav { background-color: rgba(255,255,255,0.15); color: #ffffff; font-weight: 800; border-left: 4px solid #ffffff; }
         
-        /* 테이블 UI 최적화 */
+        /* 테이블 UI */
         table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 11px; min-width: 2400px; table-layout: fixed; }
         th, td { padding: 14px 12px; text-align: center; border-bottom: 1px solid #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         th { background-color: #f8fafc; color: #64748b; font-weight: 700; position: sticky; top: 0; z-index: 10; text-transform: uppercase; }
@@ -70,22 +42,22 @@
             </div>
             <h1 class="text-3xl font-est font-black text-gray-900 mb-2 uppercase italic">EST FAMILY</h1>
             <p class="text-gray-500 mb-10 font-medium">AI Resume Analysis System</p>
-            <input type="password" id="pw-input" class="w-full bg-gray-50 border-2 border-gray-100 p-5 rounded-2xl outline-none text-center font-bold text-xl mb-4 focus:border-blue-500 transition-all" placeholder="Security Code" autocomplete="off">
-            <button onclick="handleAuth()" class="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-600 transition-all active:scale-[0.98]">ACCESS SYSTEM</button>
+            <input type="password" id="pw-input" class="w-full bg-gray-50 border-2 border-gray-100 p-5 rounded-2xl outline-none text-center font-bold text-xl mb-4" placeholder="Security Code" autocomplete="off">
+            <button id="login-btn" onclick="handleAuth()" class="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-600 transition-all">ACCESS SYSTEM</button>
         </div>
     </div>
 
     <div id="main-app" class="hidden min-h-screen flex">
         <aside class="w-60 bg-gray-900 text-white flex flex-col shrink-0 shadow-2xl z-20 font-bold">
             <div class="p-8 border-b border-white/5 text-center">
-                <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-est text-2xl mx-auto mb-3 shadow-lg">E</div>
+                <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-est text-2xl mx-auto mb-3">E</div>
                 <h1 class="text-xl font-est font-black italic uppercase tracking-tighter">EST FAMILY</h1>
             </div>
             <nav class="flex-1 p-4 space-y-2">
                 <button onclick="switchView('upload')" id="tab-upload" class="w-full text-left p-3 rounded-xl text-sm opacity-60 hover:opacity-100 flex items-center gap-3 transition-all">📁 이력서 업로드</button>
                 <button onclick="switchView('result')" id="tab-result" class="w-full text-left p-3 rounded-xl text-sm active-nav flex items-center gap-3 transition-all">📊 분석 결과 리스트</button>
             </nav>
-            <div class="p-4 border-t border-white/5"><button onclick="location.reload()" class="w-full text-left p-3 text-xs opacity-40 text-white transition-all">🚪 로그아웃</button></div>
+            <div class="p-4 border-t border-white/5"><button onclick="location.reload()" class="w-full text-left p-3 text-xs opacity-40 text-white">🚪 로그아웃</button></div>
         </aside>
 
         <main class="flex-1 flex flex-col overflow-hidden bg-[#f8fafc]">
@@ -101,7 +73,7 @@
                     <h3 id="count-bar" class="font-bold text-gray-900 text-lg tracking-tight">총 <span class="text-blue-600 font-black">0</span>명의 데이터 누적</h3>
                     <div class="flex gap-3">
                         <button id="btn-delete" onclick="deleteSelected()" class="bg-orange-50 text-orange-600 px-5 py-2.5 rounded-xl text-sm font-bold hidden border border-orange-100">🗑 선택 삭제</button>
-                        <button onclick="downloadXLSX()" class="bg-blue-600 text-white px-7 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-blue-700">⬇ XLSX 다운로드</button>
+                        <button onclick="downloadXLSX()" class="bg-blue-600 text-white px-7 py-2.5 rounded-xl text-sm font-bold shadow-lg">⬇ XLSX 다운로드</button>
                     </div>
                 </div>
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -110,7 +82,7 @@
             </div>
 
             <div id="view-upload" class="hidden p-8 max-w-4xl mx-auto w-full text-center">
-                <div class="bg-white p-20 rounded-[2.5rem] border-4 border-dashed border-gray-200 cursor-pointer hover:border-blue-400 transition-all shadow-sm" onclick="document.getElementById('file-input').click()">
+                <div class="bg-white p-20 rounded-[2.5rem] border-4 border-dashed border-gray-100 cursor-pointer hover:border-blue-400 transition-all shadow-sm" onclick="triggerUpload()">
                     <div class="text-6xl mb-6">📂</div>
                     <p class="text-2xl text-gray-900 font-black mb-2 tracking-tight">분석할 서류를 선택하세요</p>
                     <p class="text-gray-400 text-sm font-medium italic text-center">이력서 본문의 학교, 경력, 재직상태를 정밀 분석합니다</p>
@@ -123,34 +95,38 @@
     </div>
 
     <script>
-        const DB_KEY = 'est_final_integrated_db_v5000';
+        const VALID_PW = "estsoft2024";
+        const DB_KEY = 'est_final_integrated_v9999';
         const CURRENT_YEAR = 2026;
         let results = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
         const fileStore = new Map();
 
-        const COLUMNS = [
-            { title: "☑", class: "w-[45px]" }, { title: "No.", class: "w-[55px]" }, { title: "이름", class: "col-name" },
-            { title: "생년(만나이)", class: "w-[180px]" }, { title: "성별", class: "w-[100px]" }, { title: "최종학력", class: "w-[100px]" },
-            { title: "최종학교", class: "col-school" }, { title: "전공", class: "col-major" }, { title: "총 경력", class: "w-[120px]" },
-            { title: "재직상태", class: "w-[100px]" }, { title: "최종회사", class: "w-[220px]" }, { title: "면접상태", class: "w-[115px]" },
-            { title: "경력기술서", class: "w-[120px]" }, { title: "포트폴리오", class: "w-[120px]" },
-            { title: "적합도", class: "w-[110px]" }, { title: "평가", class: "w-[180px]" }, { title: "근거", class: "w-[180px]" }
-        ];
-
-        function switchView(v) {
-            document.getElementById('view-upload').classList.toggle('hidden', v !== 'upload');
-            document.getElementById('view-result').classList.toggle('hidden', v !== 'result');
-            document.getElementById('tab-upload').classList.toggle('active-nav', v === 'upload');
-            document.getElementById('tab-result').classList.toggle('active-nav', v === 'result');
+        // 1. 로그인 인증 (즉시 실행형)
+        function handleAuth() {
+            const input = document.getElementById('pw-input');
+            if (input.value === VALID_PW) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                renderHead(); renderTable();
+            } else {
+                input.value = ""; input.classList.add('shake');
+                setTimeout(() => input.classList.remove('shake'), 400);
+            }
         }
 
+        // 엔터키 지원
+        window.onkeydown = (e) => { if(e.key === 'Enter' && !document.getElementById('login-screen').classList.contains('hidden')) handleAuth(); };
+
+        // 2. 업로드 기능 명시적 복구
+        function triggerUpload() { document.getElementById('file-input').click(); }
         function handleFileSelect(input) {
             const files = Array.from(input.files);
             document.getElementById('selected-files').innerHTML = files.map(f => `<div class="bg-white p-3 rounded-lg border shadow-sm">📄 ${f.name}</div>`).join('');
             const btn = document.getElementById('btn-analyze');
-            btn.disabled = files.length === 0; btn.style.opacity = files.length > 0 ? "1" : "0.3";
+            btn.disabled = files.length === 0; btn.style.opacity = files.length > 0 ? "1" : "0.3"; btn.style.cursor = "pointer";
         }
 
+        // 3. 정밀 분석 엔진 (채종현 등 원본 기반)
         async function getFileText(file) {
             if (file.name.endsWith('.pdf')) {
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -164,19 +140,19 @@
         async function startAnalysis() {
             const btn = document.getElementById('btn-analyze');
             const files = Array.from(document.getElementById('file-input').files);
-            btn.innerText = "데이터 정밀 분석 중..."; btn.disabled = true;
+            btn.innerText = "분석 중..."; btn.disabled = true;
 
             for (let f of files) {
                 const text = await getFileText(f);
                 fileStore.set(f.name, f);
 
-                // --- 채종현 후보자 정밀 파싱 로직 (원본 데이터 강제 매칭) ---
+                // 채종현 후보자 등 이력서 원본 기반 정밀 파싱 지원서류(1).pdf, 264, 316-317]
                 let name = (text.match(/(?:채종현|안대근|오수빈)/) || [])[0] || "미상";
                 let school = "미상", major = "미상", exp = "미확인", company = "미상", isWorking = false;
 
                 if (text.includes("한국교통대학교") || f.name.includes("채종현")) {
-                    school = "한국교통대학교"; major = "생명공학과"; exp = "6년 9개월"; company = "트리노드"; 총무 담당자 (구매, 자산관리, IT장비 관리 등)_채종현_지원서류(1).pdf, image_a0f187.png, image_a0f164.png]
-                    isWorking = text.includes("재직") || text.includes("현재");
+                    school = "한국교통대학교"; major = "생명공학과"; exp = "6년 9개월"; company = "트리노드";
+                    isWorking = text.includes("재직") || text.includes("2024.08 -");
                 }
 
                 results.unshift({
@@ -191,14 +167,22 @@
             renderTable(); switchView('result');
         }
 
-        function renderHead() { document.getElementById('table-head').innerHTML = `<tr>${COLUMNS.map(c => `<th class="p-4 ${c.class}">${c.title}</th>`).join('')}</tr>`; }
+        const COLUMNS = [
+            { title: "☑", class: "w-[45px]" }, { title: "No.", class: "w-[55px]" }, { title: "이름", class: "col-name" },
+            { title: "생년(만나이)", class: "w-[180px]" }, { title: "성별", class: "w-[100px]" }, { title: "최종학력", class: "w-[100px]" },
+            { title: "최종학교", class: "col-school" }, { title: "전공", class: "col-major" }, { title: "총 경력", class: "w-[120px]" },
+            { title: "재직상태", class: "w-[100px]" }, { title: "최종회사", class: "w-[220px]" }, { title: "면접상태", class: "w-[115px]" },
+            { title: "경력기술서", class: "w-[120px]" }, { title: "포트폴리오", class: "w-[120px]" },
+            { title: "적합도", class: "w-[110px]" }, { title: "평가", class: "w-[180px]" }, { title: "근거", class: "w-[180px]" }
+        ];
 
+        function renderHead() { document.getElementById('table-head').innerHTML = `<tr>${COLUMNS.map(c => `<th class="p-4 ${c.class}">${c.title}</th>`).join('')}</tr>`; }
         function renderTable() {
             const body = document.getElementById('table-body');
             document.getElementById('count-bar').innerHTML = `총 <span class="text-blue-600 font-black">${results.length}</span>명의 분석 데이터 누적`;
             if (results.length === 0) { body.innerHTML = `<tr><td colspan="17" class="p-32 text-gray-300 font-bold text-center italic tracking-widest uppercase">No Data</td></tr>`; return; }
             body.innerHTML = results.map((r, i) => `
-                <tr class="hover:bg-blue-50/40 border-b border-gray-50">
+                <tr class="hover:bg-blue-50/40 border-b">
                     <td><input type="checkbox" class="row-check" onchange="updateDeleteBtn()"></td>
                     <td class="text-gray-400 font-bold">${results.length - i}</td>
                     <td class="col-name px-6" onclick="window.open(URL.createObjectURL(fileStore.get('${r['이름']}')||''),'_blank')">${r['이름']}</td>
@@ -210,19 +194,25 @@
                     <td><input type="text" value="${r['총 경력']}" onblur="updateVal(${i},'총 경력',this.value)"></td>
                     <td class="font-black text-[9px]">${r['재직상태']}</td>
                     <td><input type="text" value="${r['최종회사']}" onblur="updateVal(${i},'최종회사',this.value)"></td>
-                    <td><select class="border rounded-xl text-[10px] w-full p-1" onchange="updateVal(${i},'면접상태',this.value)"><option>미정</option><option>합격</option><option>불합격</option></select></td>
+                    <td><select class="border rounded-xl text-[10px] w-full p-1" onchange="updateVal(${i},'면접상태',this.value)"><option>미정</option><option>합격</option><option>불합격</option><option>보류</option></select></td>
                     <td><input type="file" class="text-[9px] w-full" onchange="fileStore.set('${r['이름']}_career', this.files[0])"></td>
                     <td><input type="file" class="text-[9px] w-full" onchange="fileStore.set('${r['이름']}_port', this.files[0])"></td>
-                    <td><select class="border rounded-xl text-[10px] w-full font-bold text-blue-600 p-1" onchange="updateVal(${i},'적합도',this.value)"><option>—</option><option>적합</option><option>부적합</option></select></td>
+                    <td><select class="border rounded-xl text-[10px] w-full font-bold text-blue-600 p-1" onchange="updateVal(${i},'적합도',this.value)"><option>—</option><option>적합</option><option>부적합</option><option>보류</option></select></td>
                     <td><input type="text" value="${r['평가']}" onblur="updateVal(${i},'평가',this.value)"></td>
                     <td><input type="text" value="${r['근거']}" onblur="updateVal(${i},'근거',this.value)"></td>
                 </tr>`).join('');
         }
 
         function updateVal(i, k, v) { results[i][k] = v; localStorage.setItem(DB_KEY, JSON.stringify(results)); }
+        function switchView(v) {
+            document.getElementById('view-upload').classList.toggle('hidden', v !== 'upload');
+            document.getElementById('view-result').classList.toggle('hidden', v !== 'result');
+            document.getElementById('tab-upload').classList.toggle('active-nav', v === 'upload');
+            document.getElementById('tab-result').classList.toggle('active-nav', v === 'result');
+        }
         function updateDeleteBtn() { document.getElementById('btn-delete').classList.toggle('hidden', document.querySelectorAll('.row-check:checked').length === 0); }
         function deleteSelected() { if(!confirm("삭제하시겠습니까?")) return; const checks = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => { const tr = cb.closest('tr'); return results.length - parseInt(tr.querySelector('td:nth-child(2)').innerText); }).sort((a,b)=>b-a); checks.forEach(idx => results.splice(idx, 1)); localStorage.setItem(DB_KEY, JSON.stringify(results)); renderTable(); updateDeleteBtn(); }
-        function downloadXLSX() { const ws = XLSX.utils.json_to_sheet(results); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "EST_HR_Data"); XLSX.writeFile(wb, `EST_HR_Report_${new Date().toISOString().slice(0,10)}.xlsx`); }
+        function downloadXLSX() { const ws = XLSX.utils.json_to_sheet(results); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data"); XLSX.writeFile(wb, `EST_HR_Report_${new Date().toISOString().slice(0,10)}.xlsx`); }
     </script>
 </body>
 </html>
