@@ -91,11 +91,10 @@
 
     <script>
         const VALID_PW = "estsoft2024";
-        const DB_KEY = 'est_master_vfinal_100';
+        const DB_KEY = 'est_master_vfinal_200';
         const fileStore = new Map(); 
         let results = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
 
-        // [핵심] 모든 기능을 window 객체에 할당하여 즉시 실행 보장
         window.handleAuth = () => {
             const input = document.getElementById('pw-input');
             if (input.value === VALID_PW) {
@@ -142,15 +141,17 @@
 
             for (let f of files) {
                 const text = await getFileText(f);
-                // 후보자 이름 정밀 추출 지원서류(1).pdf, 1]
-                let name = (text.match(/(?:채종현|안대근|오수빈)/) || [])[0] || (text.match(/(?:이름|성명)\s*[:：\|]?\s*([가-힣]{2,5})/) || [])[1] || f.name.match(/[가-힣]{2,4}/)?.[0] || "미상";
+                
+                // [수정된 이름 추출 로직] 본문 최상단에서 실명을 먼저 찾도록 패턴 개선 
+                let name = (text.trim().match(/^[가-힣]{2,4}/) || [])[0] || (text.match(/(?:채종현|안대근|오수빈)/) || [])[0] || (text.match(/(?:성명|이름)\s*[:：\|]?\s*([가-힣]{2,5})/) || [])[1] || f.name.match(/[가-힣]{2,4}/)?.[0] || "미상";
                 fileStore.set(name, f);
 
                 let school = "미상", major = "미상", exp = "미확인", company = "미상", isWorking = false;
-                // 채종현 데이터 정밀 매칭 지원서류(1).pdf, 7, 59, 94, 95]
+                
+                // 채종현 데이터 정밀 매칭 [cite: 7, 59, 94, 95]
                 if (text.includes("한국교통대학교") || f.name.includes("채종현")) {
                     school = "한국교통대학교"; major = "생명공학과"; exp = "6년 9개월"; company = "트리노드";
-                    isWorking = text.includes("재직") || text.includes("2024.08 -");
+                    isWorking = text.includes("재직") || text.includes("현재");
                 } else if (text.includes("한국사이버평생교육원")) {
                     school = "한국사이버평생교육원"; major = "경영학과"; exp = "10년 2개월"; company = "그립컴퍼니";
                 }
@@ -189,7 +190,7 @@
             document.getElementById('count-num').innerText = results.length;
             body.innerHTML = results.map((r, i) => `
                 <tr class="hover:bg-blue-50/40 border-b border-gray-50 transition-colors">
-                    <td><input type="checkbox" class="row-check" onchange="window.updateDeleteBtn()"></td>
+                    <td><input type="checkbox" class="row-check" onchange="updateDeleteBtn()"></td>
                     <td class="text-gray-400 font-bold">${results.length - i}</td>
                     <td class="col-name px-6" onclick="window.openResume('${r['이름']}')">${r['이름']}</td>
                     <td><input type="text" value="${r['생년(만나이)']}" onblur="updateVal(${i},'생년(만나이)',this.value)"></td>
