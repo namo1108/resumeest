@@ -4,162 +4,147 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EST FAMILY - 채용 이력서 분석 시스템</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #f9fafb; margin: 0; }
-        .sidebar-active { background-color: rgba(255,255,255,0.12); color: #ffffff; font-weight: 700; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: center; }
+        .hidden { display: none; }
+        .active-nav { background-color: rgba(255,255,255,0.12); color: #ffffff; font-weight: 700; }
+        table { border-collapse: collapse; width: 100%; font-size: 11px; }
+        th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: center; }
+        th { background-color: #f8f9fc; color: #6b7280; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="login-screen" class="h-screen flex items-center justify-center bg-gray-100">
+        <div class="bg-white p-10 rounded-xl shadow-xl border w-96 text-center">
+            <div class="w-12 h-12 bg-blue-600 rounded-xl mx-auto mb-4 flex items-center justify-center text-white font-bold text-xl">EST</div>
+            <h2 class="text-lg font-bold text-gray-800 mb-1">채용 이력서 분석 시스템</h2> [cite: 142]
+            <p class="text-xs text-gray-400 mb-8">접근하려면 비밀번호를 입력하세요</p> [cite: 143]
+            <input type="password" id="pw-input" class="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 ring-blue-500" placeholder="비밀번호 입력"> [cite: 152]
+            <button onclick="checkAuth()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">로그인</button> [cite: 153]
+        </div>
+    </div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+    <div id="main-app" class="hidden flex min-h-screen">
+        <aside class="w-56 bg-[#1e3a8a] text-white flex flex-col shrink-0"> [cite: 83]
+            <div class="p-6 border-b border-white/10">
+                <h1 class="text-xl font-black italic">EST FAMILY</h1> [cite: 86-87]
+            </div>
+            <nav class="p-4 space-y-2">
+                <button class="w-full text-left p-3 rounded text-sm opacity-60">📁 업로드 & 설정</button> [cite: 78]
+                <button class="w-full text-left p-3 rounded text-sm active-nav">📊 분석 결과</button> [cite: 80]
+            </nav>
+        </aside>
 
-        // 상수 설정 [cite: 9, 11]
-        const DEFAULT_PW = "estsoft2024";
-        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접진행 여부", "이력서", "JD 적합도", "적합도 평가", "평가 근거"];
-
-        function App() {
-            const [auth, setAuth] = useState(false);
-            const [password, setPassword] = useState("");
-            const [activeTab, setActiveTab] = useState("result");
-            const [results, setResults] = useState([]);
-
-            // 데이터 로드 및 저장
-            useEffect(() => {
-                const saved = localStorage.getItem('est_resume_final_data');
-                if (saved) setResults(JSON.parse(saved));
-            }, []);
-
-            useEffect(() => {
-                localStorage.setItem('est_resume_final_data', JSON.stringify(results));
-            }, [results]);
-
-            const handleLogin = () => {
-                if (password === DEFAULT_PW) {
-                    setAuth(true);
-                } else {
-                    alert("비밀번호가 틀렸습니다.");
-                }
-            };
-
-            const exportExcel = () => {
-                const ws = XLSX.utils.json_to_sheet(results);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Results");
-                XLSX.writeFile(wb, "이력서_분석결과.xlsx");
-            }; [cite: 224-228]
-
-            const addMockData = () => {
-                const mock = {
-                    "No.": results.length + 1,
-                    "이름": "문철민",
-                    "생년(만나이)": "미상 (만 나이 미상)",
-                    "성별": "남",
-                    "최종학력": "대졸(예정)",
-                    "최종학교": "세종사이버대학교",
-                    "전공": "정보보호학과(정보보안학과)",
-                    "총 경력": "17년 1개월",
-                    "최종회사": "도브러너",
-                    "면접진행 여부": "미정",
-                    "이력서": "—", "JD 적합도": "—", "적합도 평가": "—", "평가 근거": "—"
-                };
-                setResults([mock, ...results]);
-            };
-
-            if (!auth) {
-                return (
-                    <div className="h-screen flex items-center justify-center bg-gray-100">
-                        <div className="bg-white p-8 rounded-lg shadow-md w-80">
-                            <h2 className="text-xl font-bold mb-4 text-center">EST FAMILY</h2>
-                            <input 
-                                type="password" 
-                                placeholder="비밀번호 입력" 
-                                className="w-full border p-2 rounded mb-4 text-center"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                            />
-                            <button onClick={handleLogin} className="w-full bg-blue-600 text-white p-2 rounded font-bold">로그인</button>
-                        </div>
-                    </div>
-                );
-            } [cite: 137-159]
-
-            return (
-                <div className="flex min-h-screen">
-                    {/* 사이드바 [cite: 83-111] */}
-                    <aside className="w-56 bg-[#1e3a8a] text-white flex flex-col shrink-0">
-                        <div className="p-6 border-b border-white/10">
-                            <h1 className="text-xl font-black italic">EST FAMILY</h1>
-                        </div>
-                        <nav className="p-4 space-y-2">
-                            <button onClick={() => setActiveTab("upload")} className={`w-full text-left p-2 rounded ${activeTab === 'upload' ? 'sidebar-active' : ''}`}>업로드 & 설정</button>
-                            <button onClick={() => setActiveTab("result")} className={`w-full text-left p-2 rounded ${activeTab === 'result' ? 'sidebar-active' : ''}`}>분석 결과</button>
-                        </nav>
-                    </aside>
-
-                    <main className="flex-1 bg-[#f9fafb]">
-                        <header className="bg-white border-b p-4 flex justify-between items-center px-8">
-                            <h2 className="font-bold text-gray-700">{activeTab === 'upload' ? '업로드' : '분석 결과'}</h2>
-                            <div className="text-xs font-bold text-green-600 flex items-center gap-1">
-                                <span className="w-2 h-2 bg-green-500 rounded-full"></span> 일반 사용자
-                            </div>
-                        </header>
-
-                        <div className="p-8">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold">총 {results.length}명 분석 완료</h3>
-                                <div className="space-x-2">
-                                    <button onClick={addMockData} className="bg-white border px-3 py-1.5 rounded text-xs">샘플추가</button>
-                                    <button onClick={exportExcel} className="bg-blue-600 text-white px-4 py-2 rounded text-xs font-bold shadow-sm">⬇ XLSX 다운로드</button>
-                                </div>
-                            </div>
-
-                            <div className="bg-white rounded border overflow-x-auto shadow-sm">
-                                <table className="text-[11px]">
-                                    <thead className="bg-gray-50">
-                                        <tr>{COLUMNS.map(c => <th key={c} className="p-3 text-gray-500">{c}</th>)}</tr>
-                                    </thead>
-                                    <tbody>
-                                        {results.map((r, i) => (
-                                            <tr key={i} className="hover:bg-gray-50 border-b">
-                                                <td className="text-gray-400">{results.length - i}</td>
-                                                <td className="font-bold">{r["이름"]}</td>
-                                                <td>{r["생년(만나이)"]}</td>
-                                                <td>{r["성별"]}</td>
-                                                <td>{r["최종학력"]}</td>
-                                                <td>{r["최종학교"]}</td>
-                                                <td className="text-blue-600 font-medium whitespace-pre-line">{r["전공"]}</td>
-                                                <td>{r["총 경력"]}</td>
-                                                <td>{r["최종회사"]}</td>
-                                                <td>
-                                                    <select className="border rounded p-1"><option>미정</option><option>합격</option></select>
-                                                </td>
-                                                <td className="text-gray-300">—</td>
-                                                <td className="text-gray-300">—</td>
-                                                <td className="text-gray-300">—</td>
-                                                <td className="text-gray-300">—</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </main>
+        <main class="flex-1 flex flex-col">
+            <header class="bg-white border-b p-4 px-8 flex justify-between items-center shadow-sm">
+                <h2 class="font-bold text-gray-700">분석 결과</h2> [cite: 423]
+                <div class="text-xs font-bold text-green-600 flex items-center gap-1">
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span> 일반 사용자 [cite: 433-435]
                 </div>
-            );
+            </header>
+
+            <div class="p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-sm">총 <span id="count">0</span>명 분석 완료</h3> [cite: 296]
+                    <div class="flex gap-2">
+                        <button onclick="addMockData()" class="bg-white border px-3 py-1.5 rounded text-xs hover:bg-gray-50">샘플추가</button>
+                        <button onclick="downloadXLSX()" class="bg-[#4a6cf7] text-white px-4 py-2 rounded text-xs font-bold shadow-md hover:bg-blue-700">
+                            ⬇ XLSX 다운로드
+                        </button> [cite: 298]
+                    </div>
+                </div>
+
+                <div class="bg-white rounded border overflow-x-auto shadow-sm">
+                    <table id="result-table">
+                        <thead>
+                            <tr id="table-head"></tr>
+                        </thead>
+                        <tbody id="table-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const DEFAULT_PW = "estsoft2024"; [cite: 9]
+        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접진행 여부", "이력서", "JD 적합도", "적합도 평가", "평가 근거"]; [cite: 11]
+        let results = JSON.parse(localStorage.getItem('est_data') || '[]');
+
+        // 1. 초기 실행
+        window.onload = () => {
+            renderHead();
+            renderTable();
+        };
+
+        // 2. 인증 로직
+        function checkAuth() {
+            const input = document.getElementById('pw-input').value;
+            if (input === DEFAULT_PW) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+            } else {
+                alert("비밀번호가 틀렸습니다.");
+            }
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // 3. 테이블 렌더링
+        function renderHead() {
+            const head = document.getElementById('table-head');
+            head.innerHTML = COLUMNS.map(c => `<th class="p-3">${c}</th>`).join('');
+        }
+
+        function renderTable() {
+            const body = document.getElementById('table-body');
+            document.getElementById('count').innerText = results.length;
+            
+            body.innerHTML = results.map((r, i) => `
+                <tr class="hover:bg-gray-50 border-b">
+                    <td class="text-gray-400">${results.length - i}</td>
+                    <td class="font-bold text-gray-800">${r.이름}</td>
+                    <td>${r.생년}</td>
+                    <td>${r.성별}</td>
+                    <td>${r.학력}</td>
+                    <td>${r.학교}</td>
+                    <td class="text-blue-600 font-medium whitespace-pre-line">${r.전공}</td>
+                    <td>${r.경력}</td>
+                    <td>${r.회사}</td>
+                    <td><select class="border rounded p-1"><option>미정</option><option>합격</option></select></td>
+                    <td class="text-gray-300">—</td>
+                    <td class="text-gray-300">—</td>
+                    <td class="text-gray-300">—</td>
+                    <td class="text-gray-300">—</td>
+                </tr>
+            `).join('');
+        }
+
+        // 4. 데이터 추가 및 엑셀 다운로드
+        function addMockData() {
+            const mock = {
+                이름: "문철민",
+                생년: "미상 (만 나이 미상)",
+                성별: "남",
+                학력: "대졸(예정)",
+                학교: "세종사이버대학교",
+                전공: "정보보호학과\n(정보보안학과)",
+                경력: "17년 1개월",
+                회사: "도브러너"
+            };
+            results.unshift(mock);
+            localStorage.setItem('est_data', JSON.stringify(results));
+            renderTable();
+        }
+
+        function downloadXLSX() {
+            if (results.length === 0) return alert("데이터가 없습니다.");
+            const ws = XLSX.utils.json_to_sheet(results); [cite: 224]
+            const wb = XLSX.utils.book_new(); [cite: 225]
+            XLSX.utils.book_append_sheet(wb, ws, "분석결과"); [cite: 226]
+            XLSX.writeFile(wb, "이력서_분석결과.xlsx"); [cite: 228]
+        }
     </script>
 </body>
 </html>
