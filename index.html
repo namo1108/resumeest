@@ -11,9 +11,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; }
-        .sidebar-item-active { background: rgba(255,255,255,.12); color: #fff; font-weight: 700; }
-        th { white-space: nowrap; }
-        td { vertical-align: middle; }
+        .sidebar-active { background: rgba(255,255,255,.12); color: #fff; font-weight: 700; }
+        th, td { border-right: 1px solid #e5e7eb; }
+        th:last-child, td:last-child { border-right: none; }
     </style>
 </head>
 <body>
@@ -22,150 +22,170 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // 테이블 컬럼 정의 
-        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접진행 여부", "이력서", "JD 적합도", "적합도 평가", "평가 근거"];
+        const DEFAULT_PW = "estsoft2024"; [cite: 9, 114]
+        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접진행 여부", "이력서", "JD 적합도", "적합도 평가", "평가 근거"]; [cite: 11]
 
         function App() {
+            const [auth, setAuth] = useState(false); // 인증 상태 [cite: 115]
+            const [password, setPassword] = useState("");
             const [activeTab, setActiveTab] = useState("result");
             const [results, setResults] = useState([]);
+            const [files, setFiles] = useState([]);
             const [processing, setProcessing] = useState(false);
-            const fileRef = useRef();
 
-            // 데이터 누적 로드
+            // 데이터 로드
             useEffect(() => {
-                const saved = localStorage.getItem('est_resume_cumulative');
+                const saved = localStorage.getItem('est_resume_final');
                 if (saved) setResults(JSON.parse(saved));
             }, []);
 
-            // 데이터 저장
             useEffect(() => {
-                localStorage.setItem('est_resume_cumulative', JSON.stringify(results));
+                localStorage.setItem('est_resume_final', JSON.stringify(results));
             }, [results]);
 
-            // 엑셀 다운로드 기능 
-            const downloadExcel = () => {
-                if (results.length === 0) return alert("다운로드할 데이터가 없습니다.");
-                
-                const worksheet = XLSX.utils.json_to_sheet(results.map((r, i) => ({
-                    "No.": i + 1,
-                    "이름": r.이름,
-                    "생년(만나이)": r.생년 || "미상",
-                    "성별": r.성별,
-                    "최종학력": r.학력,
-                    "최종학교": r.학교,
-                    "전공": r.전공,
-                    "총 경력": r.경력,
-                    "최종회사": r.회사,
-                    "면접진행 여부": r.status || "미정",
-                    "이력서": r.link || "-",
-                    "JD 적합도": r.score || "-",
-                    "적합도 평가": r.grade || "-",
-                    "평가 근거": r.reason || "-"
-                })));
-
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "분석결과");
-                XLSX.writeFile(workbook, `이력서_분석결과_${new Date().toLocaleDateString()}.xlsx`); [cite: 228]
+            // 로그인 로직 [cite: 132-136, 153]
+            const handleLogin = () => {
+                if (password === DEFAULT_PW) {
+                    setAuth(true);
+                } else {
+                    alert("비밀번호가 올바르지 않습니다.");
+                }
             };
 
-            // 테스트 데이터 추가 (스크린샷 내용 반영)
-            const addSampleData = () => {
+            // 엑셀 다운로드 
+            const exportToExcel = () => {
+                const ws = XLSX.utils.json_to_sheet(results.map((r, i) => ({
+                    "No.": i + 1,
+                    ...r
+                })));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "분석결과");
+                XLSX.writeFile(wb, "이력서_분석결과.xlsx"); [cite: 228]
+            };
+
+            // 테스트 데이터 추가 (스크린샷 기준)
+            const addSample = () => {
                 const sample = {
                     id: Date.now(),
-                    이름: "문철민",
-                    생년: "미상(만 나이 미상)",
-                    성별: "남",
-                    학력: "대졸(예정)",
-                    학교: "세종사이버대학교",
-                    전공: "정보보호학과(정보보안학과)",
-                    경력: "17년 1개월",
-                    회사: "도브러너",
-                    status: "미정",
-                    score: "-",
-                    grade: "-",
-                    reason: "-",
-                    link: ""
+                    "이름": "문철민",
+                    "생년(만나이)": "미상 (만 나이 미상)",
+                    "성별": "남",
+                    "최종학력": "대졸(예정)",
+                    "최종학교": "세종사이버대학교",
+                    "전공": "정보보호학과(정보보안학과)",
+                    "총 경력": "17년 1개월",
+                    "최종회사": "도브러너",
+                    "면접진행 여부": "미정",
+                    "이력서": "—",
+                    "JD 적합도": "—",
+                    "적합도 평가": "—",
+                    "평가 근거": "—"
                 };
                 setResults([sample, ...results]);
             };
 
+            // 인증 전 화면 (비밀번호 입력) [cite: 137-159]
+            if (!auth) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                        <div className="bg-white p-10 rounded-xl shadow-xl border w-96 text-center">
+                            <div className="w-12 h-12 bg-blue-600 rounded-xl mx-auto mb-4 flex items-center justify-center text-white font-bold text-xl">EST</div>
+                            <h2 className="text-lg font-bold text-gray-800 mb-1">채용 이력서 분석 시스템</h2> [cite: 142]
+                            <p className="text-xs text-gray-400 mb-8">접근하려면 비밀번호를 입력하세요</p> [cite: 143]
+                            <input 
+                                type="password" 
+                                className="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 ring-blue-500"
+                                placeholder="비밀번호 입력"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                            /> [cite: 152]
+                            <button onClick={handleLogin} className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">로그인</button> [cite: 153]
+                        </div>
+                    </div>
+                );
+            }
+
+            // 인증 후 메인 화면
             return (
                 <div className="flex min-h-screen">
                     {/* 사이드바 [cite: 83-111] */}
                     <aside className="w-[220px] bg-[#2d3a82] text-white flex flex-col shrink-0">
-                        <div className="p-5 border-b border-white/10 text-center">
-                            <h1 className="text-xl font-black">EST <span className="font-light opacity-70">FAMILY</span></h1>
+                        <div className="p-5 border-b border-white/10">
+                            <h1 className="text-xl font-black italic">EST FAMILY</h1>
                             <p className="text-[10px] opacity-40 mt-1">채용 이력서 분석 시스템</p>
                         </div>
                         <nav className="flex-1 p-3 space-y-1">
-                            <button onClick={() => setActiveTab("upload")} className={`w-full text-left px-4 py-2.5 rounded text-sm transition ${activeTab==='upload'?'sidebar-item-active':'opacity-60'}`}>📁 업로드 & 설정</button>
-                            <button onClick={() => setActiveTab("result")} className={`w-full text-left px-4 py-2.5 rounded text-sm transition ${activeTab==='result'?'sidebar-item-active':'opacity-60'}`}>📊 분석 결과</button>
+                            <button onClick={() => setActiveTab("upload")} className={`w-full text-left px-4 py-2.5 rounded text-sm transition ${activeTab==='upload'?'sidebar-active':'opacity-60'}`}>📁 업로드 & 설정</button>
+                            <button onClick={() => setActiveTab("result")} className={`w-full text-left px-4 py-2.5 rounded text-sm transition ${activeTab==='result'?'sidebar-active':'opacity-60'}`}>📊 분석 결과</button>
                             <button className="w-full text-left px-4 py-2.5 rounded text-sm opacity-60">⚙️ 관리자 설정</button>
                         </nav>
                     </aside>
 
-                    {/* 메인 콘텐츠 */}
                     <main className="flex-1 flex flex-col overflow-hidden">
-                        <header className="bg-white border-b px-8 py-4 flex justify-between items-center">
-                            <div>
-                                <h2 className="font-bold text-gray-800">분석 결과</h2>
-                                <p className="text-[10px] text-gray-400">채용 이력서 분석 시스템</p>
+                        <header className="bg-white border-b px-8 py-4 flex justify-between items-center shadow-sm">
+                            <h2 className="font-bold text-gray-800 text-sm">{activeTab === 'upload' ? '업로드 & 설정' : '분석 결과'}</h2>
+                            <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
+                                <span className="w-2 h-2 bg-green-500 rounded-full"></span> 일반 사용자 [cite: 433-435]
                             </div>
                         </header>
 
                         <div className="p-8 flex-1 overflow-auto">
-                            <div className="flex justify-between items-center mb-5">
-                                <h3 className="font-bold text-sm text-gray-700">총 {results.length}명 분석 완료</h3>
-                                <div className="space-x-2">
-                                    <button onClick={addSampleData} className="bg-gray-100 text-gray-600 px-3 py-1.5 rounded text-xs border">샘플 추가</button>
-                                    <button onClick={downloadExcel} className="bg-[#4a6cf7] text-white px-4 py-2 rounded flex items-center gap-2 text-xs font-bold shadow-sm hover:bg-blue-700 transition"> [cite: 298]
-                                        <span>⬇ XLSX 다운로드</span>
-                                    </button>
+                            {activeTab === 'upload' ? (
+                                <div className="max-w-2xl mx-auto space-y-6">
+                                    <div className="bg-white p-6 rounded-lg border text-center cursor-pointer hover:bg-gray-50 transition" onClick={() => addSample()}>
+                                        <p className="text-blue-600 font-bold">여기를 클릭하여 샘플 데이터를 추가해 보세요 (테스트용)</p>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <>
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="font-bold text-sm text-gray-700">총 {results.length}명 분석 완료</h3>
+                                        <button onClick={exportToExcel} className="bg-[#4a6cf7] text-white px-5 py-2.5 rounded-lg flex items-center gap-2 text-xs font-bold shadow-lg hover:bg-blue-700 transition">
+                                            <span>⬇ XLSX 다운로드</span>
+                                        </button> [cite: 298]
+                                    </div>
 
-                            {/* 결과 테이블 [cite: 302-350] */}
-                            <div className="bg-white rounded border shadow-sm overflow-x-auto">
-                                <table className="w-full text-[11px] text-center border-collapse">
-                                    <thead className="bg-[#f8f9fc] border-b-2">
-                                        <tr>
-                                            {COLUMNS.map(col => <th key={col} className="p-3 text-gray-500 font-bold border-r last:border-0">{col}</th>)}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {results.map((r, i) => (
-                                            <tr key={r.id} className="border-b last:border-0 hover:bg-gray-50">
-                                                <td className="p-3 text-gray-400 border-r">{results.length - i}</td>
-                                                <td className="p-3 font-bold text-gray-800 border-r w-20 leading-tight">{r.이름}</td>
-                                                <td className="p-3 text-gray-600 border-r w-24 leading-tight">{r.생년}</td>
-                                                <td className="p-3 text-gray-600 border-r">{r.성별}</td>
-                                                <td className="p-3 text-gray-600 border-r w-20 leading-tight">{r.학력}</td>
-                                                <td className="p-3 text-gray-600 border-r w-24 leading-tight">{r.학교}</td>
-                                                <td className="p-3 text-gray-600 border-r w-32 leading-tight">{r.전공}</td>
-                                                <td className="p-3 text-gray-600 border-r w-20 leading-tight">{r.경력}</td>
-                                                <td className="p-3 text-gray-600 border-r w-24 leading-tight">{r.회사}</td>
-                                                <td className="p-3 border-r">
-                                                    <select className="border rounded px-1 py-0.5 outline-none bg-white" defaultValue={r.status}> [cite: 326-330]
-                                                        <option>미정</option>
-                                                        <option>진행중</option>
-                                                        <option>합격</option>
-                                                        <option>불합격</option>
-                                                    </select>
-                                                </td>
-                                                <td className="p-3 text-gray-400 border-r">—</td>
-                                                <td className="p-3 text-gray-400 border-r">—</td>
-                                                <td className="p-3 text-gray-400 border-r">—</td>
-                                                <td className="p-3 text-gray-400">—</td>
-                                            </tr>
-                                        ))}
-                                        {results.length === 0 && (
-                                            <tr>
-                                                <td colSpan={COLUMNS.length} className="p-20 text-gray-400 text-sm">분석된 데이터가 없습니다.</td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
+                                        <table className="w-full text-[11px] text-center border-collapse">
+                                            <thead className="bg-[#f8f9fc] border-b-2">
+                                                <tr className="text-gray-500 font-bold">
+                                                    {COLUMNS.map(col => <th key={col} className="p-3 bg-gray-50">{col}</th>)}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {results.map((r, i) => (
+                                                    <tr key={r.id} className="border-b hover:bg-gray-50 text-gray-700">
+                                                        <td className="p-3 text-gray-400">{results.length - i}</td>
+                                                        <td className="p-3 font-bold text-gray-900 w-20 leading-tight">{r["이름"]}</td>
+                                                        <td className="p-3 w-24 leading-tight">{r["생년(만나이)"]}</td>
+                                                        <td className="p-3">{r["성별"]}</td>
+                                                        <td className="p-3 w-20 leading-tight">{r["최종학력"]}</td>
+                                                        <td className="p-3 w-24 leading-tight">{r["최종학교"]}</td>
+                                                        <td className="p-3 w-32 leading-tight py-4 whitespace-pre-line text-blue-600 font-medium">{r["전공"]}</td>
+                                                        <td className="p-3 w-20 leading-tight">{r["총 경력"]}</td>
+                                                        <td className="p-3 w-24 leading-tight">{r["최종회사"]}</td>
+                                                        <td className="p-3">
+                                                            <select className="border rounded px-1 py-1 text-[10px] outline-none">
+                                                                <option>미정</option> [cite: 329]
+                                                                <option>합격</option>
+                                                                <option>불합격</option>
+                                                            </select>
+                                                        </td>
+                                                        <td className="p-3 text-gray-300">—</td>
+                                                        <td className="p-3 text-gray-300">—</td>
+                                                        <td className="p-3 text-gray-300">—</td>
+                                                        <td className="p-3 text-gray-300">—</td>
+                                                    </tr>
+                                                ))}
+                                                {results.length === 0 && (
+                                                    <tr><td colSpan={COLUMNS.length} className="p-20 text-gray-400 text-sm font-medium text-center bg-white">분석된 데이터가 없습니다.</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </main>
                 </div>
