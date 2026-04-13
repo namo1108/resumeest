@@ -52,7 +52,7 @@
                     <button onclick="downloadXLSX()" class="bg-[#4a6cf7] text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow-lg hover:bg-blue-700 transition">⬇ 엑셀(XLSX) 다운로드</button>
                 </div>
                 <div class="bg-white rounded-xl border border-gray-100 overflow-x-auto shadow-sm">
-                    <table id="result-table">
+                    <table>
                         <thead><tr id="table-head"></tr></thead>
                         <tbody id="table-body"></tbody>
                     </table>
@@ -73,62 +73,70 @@
 
     <script>
         const DEFAULT_PW = "estsoft2024";
+        const CURRENT_YEAR = 2026; // 현재 시점 기준
         const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접상태", "이력서", "적합도", "평가", "근거"];
-        let results = JSON.parse(localStorage.getItem('est_data_v3') || '[]');
-        let selectedFiles = [];
+        let results = JSON.parse(localStorage.getItem('est_data_v5') || '[]');
 
-        // 1. 인증 처리
         function checkAuth() {
             if (document.getElementById('pw-input').value === DEFAULT_PW) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
-                renderHead();
-                renderTable();
+                renderHead(); renderTable();
             } else { alert("비밀번호가 틀렸습니다."); }
         }
 
-        // 2. 탭 전환
         function switchTab(tab) {
             document.getElementById('tab-upload').classList.toggle('hidden', tab !== 'upload');
             document.getElementById('tab-result').classList.toggle('hidden', tab !== 'result');
             document.getElementById('nav-upload').classList.toggle('active-nav', tab === 'upload');
             document.getElementById('nav-result').classList.toggle('active-nav', tab === 'result');
-            document.getElementById('header-title').innerText = (tab === 'upload') ? '이력서 업로드' : '분석 결과 리스트';
         }
 
-        // 3. 파일 처리 및 시뮬레이션
         function handleFileSelect(input) {
-            selectedFiles = Array.from(input.files);
-            document.getElementById('selected-files').innerHTML = selectedFiles.map(f => `<div>✅ ${f.name} 대기 중</div>`).join('');
+            const list = document.getElementById('selected-files');
+            const files = Array.from(input.files);
+            list.innerHTML = files.map(f => `<div>✅ ${f.name}</div>`).join('');
             const btn = document.getElementById('btn-analyze');
-            btn.disabled = selectedFiles.length === 0;
-            btn.style.opacity = selectedFiles.length === 0 ? "0.5" : "1";
-            btn.style.cursor = selectedFiles.length === 0 ? "not-allowed" : "pointer";
+            btn.disabled = files.length === 0;
+            btn.style.opacity = files.length === 0 ? "0.5" : "1";
+            btn.style.cursor = files.length === 0 ? "not-allowed" : "pointer";
         }
 
-        function startAnalysis() {
+        // 나이 계산 로직 추가 
+        function calculateAge(birthText) {
+            const yearMatch = birthText.match(/\d{4}/); // 4자리 연도 추출
+            if (yearMatch) {
+                const birthYear = parseInt(yearMatch[0]);
+                const age = CURRENT_YEAR - birthYear;
+                return `${birthYear}년생 (만 ${age}세)`; [cite: 167]
+            }
+            return birthText || "미상";
+        }
+
+        async function startAnalysis() {
             const btn = document.getElementById('btn-analyze');
-            btn.innerText = "분석 진행 중...";
+            const files = Array.from(document.getElementById('file-input').files);
+            btn.innerText = "나이 계산 및 데이터 분석 중...";
             btn.disabled = true;
 
             setTimeout(() => {
-                selectedFiles.forEach(file => {
+                files.forEach(file => {
+                    // 예시 생년 데이터 (실제 AI 분석 결과에서 가져온다고 가정) 
+                    const mockBirth = "1994년"; 
+                    
                     results.unshift({
-                        "이름": file.name.split('.')[0], "생년(만나이)": "분석 완료", "성별": "남", "최종학력": "대졸",
-                        "최종학교": "대학교", "전공": "컴퓨터공학", "총 경력": "3년", "최종회사": "ESTSOFT", "면접상태": "미정"
+                        "이름": file.name.split('.')[0],
+                        "생년(만나이)": calculateAge(mockBirth), // 자동 계산 함수 적용
+                        "성별": "남", "최종학력": "대졸", "최종학교": "대학교", "전공": "컴퓨터공학",
+                        "총 경력": "3년", "최종회사": "ESTSOFT", "면접상태": "미정"
                     });
                 });
-                localStorage.setItem('est_data_v3', JSON.stringify(results));
-                btn.innerText = "AI 분석 시작";
-                btn.disabled = false;
-                selectedFiles = [];
-                document.getElementById('selected-files').innerHTML = "";
-                renderTable();
-                switchTab('result');
+                localStorage.setItem('est_data_v5', JSON.stringify(results));
+                btn.innerText = "AI 분석 시작"; btn.disabled = false;
+                renderTable(); switchTab('result');
             }, 1500);
         }
 
-        // 4. 테이블 렌더링
         function renderHead() {
             document.getElementById('table-head').innerHTML = COLUMNS.map(c => `<th class="p-4 text-xs">${c}</th>`).join('');
         }
@@ -136,29 +144,25 @@
         function renderTable() {
             const body = document.getElementById('table-body');
             document.getElementById('count').innerText = results.length;
-            if (results.length === 0) {
-                body.innerHTML = `<tr><td colspan="14" class="p-20 text-gray-400">데이터가 없습니다.</td></tr>`;
-                return;
-            }
+            if (results.length === 0) { body.innerHTML = `<tr><td colspan="14" class="p-20 text-gray-400">데이터가 없습니다.</td></tr>`; return; }
             body.innerHTML = results.map((r, i) => `
                 <tr class="hover:bg-gray-50 border-b">
                     <td class="text-gray-400">${results.length - i}</td>
                     <td class="font-bold text-gray-800">${r["이름"]}</td>
-                    <td>${r["생년(만나이)"] || '-'}</td><td>${r["성별"] || '-'}</td><td>${r["최종학력"] || '-'}</td><td>${r["최종학교"] || '-'}</td>
-                    <td class="text-blue-600 font-bold text-[10px]">${r["전공"] || '-'}</td>
-                    <td>${r["총 경력"] || '-'}</td><td>${r["최종회사"] || '-'}</td>
+                    <td class="text-blue-700 font-medium">${r["생년(만나이)"]}</td>
+                    <td>${r["성별"]}</td><td>${r["최종학력"]}</td><td>${r["최종학교"]}</td>
+                    <td class="text-blue-600 font-bold text-[10px]">${r["전공"]}</td>
+                    <td>${r["총 경력"]}</td><td>${r["최종회사"]}</td>
                     <td><select class="border rounded p-1 text-[10px] bg-white"><option>미정</option><option>합격</option></select></td>
                     <td colspan="4" class="text-gray-300">—</td>
                 </tr>`).join('');
         }
 
-        // 5. 엑셀 다운로드
         function downloadXLSX() {
-            if (results.length === 0) return alert("데이터가 없습니다.");
             const ws = XLSX.utils.json_to_sheet(results);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "분석결과");
-            XLSX.writeFile(wb, "EST_FAMILY_분석결과.xlsx");
+            XLSX.writeFile(wb, "EST_FAMILY_분석결과_나이포함.xlsx");
         }
     </script>
 </body>
