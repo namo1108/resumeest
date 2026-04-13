@@ -92,8 +92,8 @@
             <div id="view-result" class="p-9 flex-1 overflow-auto">
                 <div class="bg-white p-6 rounded-2xl mb-7 shadow-sm border border-gray-100 flex justify-between items-center">
                     <div>
-                        <h3 class="font-bold text-gray-900 text-base">
-                            총 <span id="count" class="text-blue-600 font-black text-xl">0</span>명의 데이터 누적
+                        <h3 id="count-bar" class="font-bold text-gray-900 text-base">
+                            총 <span class="text-blue-600 font-black text-xl">0</span>명의 데이터 누적
                         </h3>
                     </div>
                     <div class="flex gap-3">
@@ -281,6 +281,24 @@
             document.getElementById('btn-download').onclick = downloadXLSX;
             document.getElementById('btn-clear').onclick = clearAllData;
             document.getElementById('btn-delete-selected').onclick = deleteSelected;
+
+            // ── 테이블 이벤트 위임: 한 번만 등록 ──
+            const tbody = document.getElementById('table-body');
+            tbody.addEventListener('change', function(e) {
+                const idx = parseInt(e.target.dataset.index);
+                if (e.target.classList.contains('row-check')) { updateDeleteBtn(); return; }
+                if (isNaN(idx)) return;
+                if (e.target.classList.contains('interview-select')) { results[idx]['면접상태'] = e.target.value; saveData(); }
+                if (e.target.classList.contains('fit-select'))       { results[idx]['적합도']   = e.target.value; saveData(); }
+            });
+            tbody.addEventListener('blur', function(e) {
+                const idx = parseInt(e.target.dataset.index);
+                if (isNaN(idx)) return;
+                if (e.target.classList.contains('exp-input'))     { results[idx]['총 경력'] = e.target.value; saveData(); }
+                if (e.target.classList.contains('company-input')) { results[idx]['최종회사'] = e.target.value; saveData(); }
+                if (e.target.classList.contains('eval-input'))    { results[idx]['평가']     = e.target.value; saveData(); }
+                if (e.target.classList.contains('note-input'))    { results[idx]['근거']     = e.target.value; saveData(); }
+            }, true);
         });
 
         // ──────────────────────────────────────────────
@@ -413,21 +431,27 @@
             });
         }
 
+        function updateCountBar() {
+            const totalMonths = results.reduce((sum, r) => sum + parseExpMonths(r['총 경력']), 0);
+            const el = document.getElementById('count-bar');
+            if (el) el.innerHTML = `총 <span class="text-blue-600 font-black text-xl">${results.length}</span>명의 데이터 누적`
+                + (totalMonths > 0 ? `&nbsp;&nbsp;<span class="text-xs text-gray-400">전체 경력 합산 <span class="text-indigo-600 font-bold">${formatExp(totalMonths)}</span></span>` : '');
+        }
+
         function renderTable() {
             const body = document.getElementById('table-body');
-            document.getElementById('count').innerText = results.length;
 
             if (results.length === 0) {
+                updateCountBar();
                 body.innerHTML = `<tr>
-                    <td colspan="14" class="p-32 text-gray-300 font-bold text-lg uppercase text-center">
+                    <td colspan="16" class="p-32 text-gray-300 font-bold text-lg uppercase text-center">
                         No Data Accumulated
                     </td>
                 </tr>`;
                 return;
             }
 
-            // 전체 경력 합산 표시
-            const totalMonths = results.reduce((sum, r) => sum + parseExpMonths(r['총 경력']), 0);
+            updateCountBar();
 
             body.innerHTML = results.map((r, i) => `
                 <tr class="hover:bg-blue-50/40 transition-colors border-b border-gray-50 font-medium text-gray-700" data-index="${i}">
@@ -490,47 +514,6 @@
                     </td>
                 </tr>`).join('');
 
-            // count 영역에 경력 합산 추가
-            const countEl = document.getElementById('count');
-            countEl.parentElement.innerHTML = `총 <span class="text-blue-600 font-black text-xl">${results.length}</span>명의 데이터 누적
-                <span class="text-xs text-gray-400 ml-3">전체 경력 합산 <span class="text-indigo-600 font-bold">${formatExp(totalMonths)}</span></span>`;
-
-            // ── 이벤트 위임: change (select류 + 체크박스) ──
-            body.addEventListener('change', function(e) {
-                const idx = parseInt(e.target.dataset.index);
-                if (e.target.classList.contains('row-check')) { updateDeleteBtn(); return; }
-                if (isNaN(idx)) return;
-                if (e.target.classList.contains('interview-select')) {
-                    results[idx]['면접상태'] = e.target.value;
-                    saveData();
-                }
-                if (e.target.classList.contains('fit-select')) {
-                    results[idx]['적합도'] = e.target.value;
-                    saveData();
-                }
-            });
-
-            // ── 이벤트 위임: blur (input류) ──
-            body.addEventListener('blur', function(e) {
-                const idx = parseInt(e.target.dataset.index);
-                if (isNaN(idx)) return;
-                if (e.target.classList.contains('exp-input')) {
-                    results[idx]['총 경력'] = e.target.value;
-                    saveData();
-                }
-                if (e.target.classList.contains('company-input')) {
-                    results[idx]['최종회사'] = e.target.value;
-                    saveData();
-                }
-                if (e.target.classList.contains('eval-input')) {
-                    results[idx]['평가'] = e.target.value;
-                    saveData();
-                }
-                if (e.target.classList.contains('note-input')) {
-                    results[idx]['근거'] = e.target.value;
-                    saveData();
-                }
-            }, true);
         }
 
         // ──────────────────────────────────────────────
