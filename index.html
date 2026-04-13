@@ -7,6 +7,8 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-weight='900' fill='%234a6cf7'>E</text></svg>">
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; }
@@ -328,81 +330,221 @@
         }
 
         // ──────────────────────────────────────────────
-        //  분석 (파일명 기반 데이터 추출)
+        //  파일 텍스트 추출
         // ──────────────────────────────────────────────
-        function startAnalysis() {
+        function readAsText(file) {
+            return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload  = e => resolve(e.target.result || '');
+                reader.onerror = () => resolve('');
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        async function extractPdfText(file) {
+            try {
+                pdfjsLib.GlobalWorkerOptions.workerSrc =
+                    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                const buf = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+                let text = '';
+                for (let p = 1; p <= pdf.numPages; p++) {
+                    const page    = await pdf.getPage(p);
+                    const content = await page.getTextContent();
+                    text += content.items.map(i => i.str).join(' ') + '\n';
+                }
+                return text;
+            } catch { return ''; }
+        }
+
+        async function extractDocxText(file) {
+            try {
+                const buf    = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer: buf });
+                return result.value || '';
+            } catch { return ''; }
+        }
+
+        async function getFileText(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'pdf')                   return extractPdfText(file);
+            if (ext === 'docx' || ext === 'doc') return extractDocxText(file);
+            if (ext === 'txt')                   return readAsText(file);
+            return ''; // hwp 등은 빈 문자열 (파일명 기반 폴백)
+        }
+
+        // ──────────────────────────────────────────────
+        //  한국어 이력서 파서
+        // ──────────────────────────────────────────────
+        function parseResume(text, fname) {
+            const t = text || '';
+
+            // ── 이름 ──
+            let name = '';
+            const nmMatch = t.match(/(?:이름|성명)\s*[:：\|]?\s*([가-힣]{2,5})/);
+            if (nmMatch) { name = nmMatch[1]; }
+            else {
+                // 파일명에서 한글 이름 추출
+                const fnBase = fname.replace(/\.(pdf|docx?|hwp|txt)$/i, '');
+                const korMatch = fnBase.match(/[가-힣]{2,5}/);
+                name = korMatch ? korMatch[0] : fnBase.split('_')[0] || fnBase.split('.')[0];
+            }
+
+            // ── 생년월일 & 성별 ──
+            let birth = 1990, gender = '남';
+            const bdMatch = t.match(/(?:생년월일|생일|출생일)\s*[:：]?\s*(\d{4})[.\-\/년]?\s*(\d{1,2})?/)
+                         || t.match(/(\d{4})년\s*\d{1,2}월\s*\d{1,2}일\s*(?:생|출생)/);
+            if (bdMatch) birth = parseInt(bdMatch[1]);
+            else {
+                // 주민번호 패턴
+                const juminMatch = t.match(/(\d{2})(\d{2})(\d{2})\s*[-*]+\s*([1-4])/);
+                if (juminMatch) {
+                    const y2 = parseInt(juminMatch[1]), gen = parseInt(juminMatch[4]);
+                    birth  = (gen <= 2) ? 1900 + y2 : 2000 + y2;
+                    gender = (gen % 2 === 1) ? '남' : '여';
+                } else {
+                    // 파일명에서 연도 추출
+                    const yrMatch = fname.match(/(\d{4})/);
+                    if (yrMatch) birth = parseInt(yrMatch[1]);
+                }
+            }
+            const gMatch = t.match(/성별\s*[:：]?\s*(남|여)/);
+            if (gMatch) gender = gMatch[1];
+
+            // ── 학력 ──
+            let edu = '대졸', school = '';
+            if (t.match(/대학원\s*(졸업|수료)/)) edu = '대학원졸';
+            else if (t.match(/전문대|전문학교/)) edu = '전문대졸';
+            else if (t.match(/고등학교|고졸/))   edu = '고졸';
+
+            const schoolPatterns = [
+                /([가-힣]{2,12}(?:대학교|사이버대학교|사이버평생교육원|평생교육원|사이버대))/,
+                /([가-힣]{2,12}(?:대학|전문대학))/
+            ];
+            for (const p of schoolPatterns) {
+                const m = t.match(p);
+                if (m) { school = m[1]; break; }
+            }
+
+            // ── 전공 ──
+            let major = '';
+            const majorPatterns = [
+                /(?:전공|학과|학부|계열)\s*[:：]?\s*([가-힣A-Za-z·\s]{2,20}(?:학과|학부|공학|과|전공|계열))/,
+                /([가-힣A-Za-z]{2,15}(?:학과|공학과|학부))/
+            ];
+            for (const p of majorPatterns) {
+                const m = t.match(p);
+                if (m) { major = m[1].trim(); break; }
+            }
+
+            // ── 경력 계산 (날짜 범위 합산) ──
+            let totalMonths = 0;
+            const entries = [];
+
+            // 패턴: 2019.03 ~ 2023.02 / 2019년 3월 ~ 2023년 2월 / 2019-03 ~ 현재
+            const rangeRe = /(\d{4})[.\-년\/]\s*(\d{1,2})[월]?\s*[~\-–~]\s*(?:(\d{4})[.\-년\/]\s*(\d{1,2})[월]?|(현재|재직중|현직|재직))/g;
+            let m;
+            while ((m = rangeRe.exec(t)) !== null) {
+                const sy = parseInt(m[1]), sm = parseInt(m[2]);
+                let ey, em, cur = false;
+                if (m[5]) { ey = CURRENT_YEAR; em = new Date().getMonth() + 1; cur = true; }
+                else       { ey = parseInt(m[3]); em = parseInt(m[4]); }
+                const dur = (ey - sy) * 12 + (em - sm);
+                if (dur > 0 && dur < 600) {
+                    totalMonths += dur;
+                    entries.push({ sy, sm, ey, em, cur, pos: m.index });
+                }
+            }
+
+            // ── 최종회사 ──
+            let company = '';
+            if (entries.length > 0) {
+                const latest = entries.reduce((a, b) =>
+                    (a.sy * 12 + a.sm) >= (b.sy * 12 + b.sm) ? a : b);
+
+                // 해당 날짜 앞뒤 150자 내 회사명 탐색
+                const ctx = t.substring(Math.max(0, latest.pos - 150), latest.pos + 50);
+                const coPatterns = [
+                    /(?:\(주\)|\(유\)|주식회사)\s*([가-힣A-Za-z][가-힣A-Za-z0-9\s]{1,20})/,
+                    /([가-힣A-Za-z][가-힣A-Za-z0-9\s]{1,15}(?:주식회사|\(주\)|컴퍼니|코리아|그룹|테크|시스템|솔루션|서비스|파트너스|엔터|홀딩스))/,
+                    /([가-힣A-Za-z][가-힣A-Za-z0-9\s]{2,15}(?:회사|기업|법인))/
+                ];
+                for (const p of coPatterns) {
+                    const cm = ctx.match(p);
+                    if (cm) { company = cm[0].trim(); break; }
+                }
+                if (latest.cur && company) company = company.replace(/\s*\(재직중\)$/,'') + '(재직중)';
+                else if (latest.cur) company = '재직중';
+            }
+
+            // ── 신입 fallback ──
+            const expStr = totalMonths > 0
+                ? formatExp(totalMonths)
+                : (t.match(/신입|재학|졸업예정/) ? '신입' : '');
+
+            return {
+                name    : name || '미확인',
+                birth,
+                gender,
+                edu,
+                school  : school  || '미확인',
+                major   : major   || '미확인',
+                exp     : expStr  || '미확인',
+                company : company || '미확인'
+            };
+        }
+
+        // ──────────────────────────────────────────────
+        //  분석 (파일 내용 파싱)
+        // ──────────────────────────────────────────────
+        async function startAnalysis() {
             const btn   = document.getElementById('btn-analyze');
             const files = Array.from(document.getElementById('file-input').files);
-            btn.innerText     = '개인별 고유 데이터 정밀 분석 중...';
             btn.disabled      = true;
             btn.style.opacity = '0.6';
 
-            setTimeout(() => {
-                let added = 0;
-                files.forEach(file => {
-                    const fname = file.name;
-                    let birth = 1990,
-                        name    = '후보자',
-                        school  = '대학교 풀네임',
-                        major   = '전공 학과명',
-                        exp     = '경력(년/월)',
-                        company = '최종회사(상태)',
-                        gender  = '남',
-                        edu     = '대졸';
+            let added = 0;
+            for (let fi = 0; fi < files.length; fi++) {
+                const file  = files[fi];
+                btn.innerText = `분석 중... (${fi + 1}/${files.length}) ${file.name}`;
 
-                    const yearMatch = fname.match(/\d{4}/);
-                    if (yearMatch) birth = parseInt(yearMatch[0]);
+                const text = await getFileText(file);
+                const d    = parseResume(text, file.name);
 
-                    // ── 이름별 하드코딩 데이터 ──
-                    if (fname.includes('안대근')) {
-                        name = '안대근'; school = '한국사이버평생교육원'; major = '경영학과';
-                        exp = '10년 2개월'; company = '(주)그립컴퍼니(재직중)';
-                    } else if (fname.includes('오수빈')) {
-                        name = '오수빈'; birth = 1992; school = '숭실사이버대학교';
-                        major = 'AI·컴퓨터공학과'; exp = '신입(재학중)'; company = '-';
-                    } else {
-                        name = fname.split('_')[1] || fname.split('.')[0];
-                    }
+                // 중복 방지
+                if (results.some(r => r['이름'] === d.name)) continue;
 
-                    // 중복 방지 (같은 이름이 이미 존재하면 스킵)
-                    if (results.some(r => r['이름'] === name)) return;
-
-                    results.unshift({
-                        'No.'         : 0,
-                        '이름'        : name,
-                        '생년(만나이)': `${birth}년생 (만 ${CURRENT_YEAR - birth}세)`,
-                        '성별'        : gender,
-                        '최종학력'    : edu,
-                        '최종학교'    : school,
-                        '전공'        : major,
-                        '총 경력'     : exp,
-                        '최종회사'    : company,
-                        '면접상태'    : '미정',
-                        '이력서'      : '',
-                        '적합도'      : '',
-                        '평가'        : '',
-                        '근거'        : ''
-                    });
-                    added++;
+                results.unshift({
+                    'No.'         : 0,
+                    '이름'        : d.name,
+                    '생년(만나이)': `${d.birth}년생 (만 ${CURRENT_YEAR - d.birth}세)`,
+                    '성별'        : d.gender,
+                    '최종학력'    : d.edu,
+                    '최종학교'    : d.school,
+                    '전공'        : d.major,
+                    '총 경력'     : d.exp,
+                    '최종회사'    : d.company,
+                    '면접상태'    : '미정',
+                    '이력서'      : '',
+                    '적합도'      : '',
+                    '평가'        : '',
+                    '근거'        : ''
                 });
+                added++;
+            }
 
-                saveData();
+            saveData();
+            btn.innerText     = 'AI 정밀 분석 시작';
+            btn.disabled      = true;
+            btn.style.opacity = '0.3';
+            btn.style.cursor  = 'not-allowed';
+            document.getElementById('file-input').value = '';
+            document.getElementById('selected-files').innerHTML = '';
 
-                // 버튼 / 파일 입력 초기화
-                btn.innerText     = 'AI 정밀 분석 시작';
-                btn.disabled      = true;
-                btn.style.opacity = '0.3';
-                btn.style.cursor  = 'not-allowed';
-                document.getElementById('file-input').value = '';
-                document.getElementById('selected-files').innerHTML = '';
+            if (added === 0) alert('이미 등록된 이력서이거나 추가된 데이터가 없습니다.');
 
-                if (added === 0) {
-                    alert('이미 등록된 이력서이거나 추가된 데이터가 없습니다.');
-                }
-
-                renderTable();
-                switchView('result');
-            }, 1800);
+            renderTable();
+            switchView('result');
         }
 
         // ──────────────────────────────────────────────
