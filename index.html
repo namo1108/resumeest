@@ -11,58 +11,67 @@
         .hidden { display: none; }
         .active-nav { background-color: rgba(255,255,255,0.12); color: #ffffff; font-weight: 700; }
         table { border-collapse: collapse; width: 100%; font-size: 11px; }
-        th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: center; }
-        th { background-color: #f8f9fc; color: #6b7280; }
+        th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: center; }
+        th { background-color: #f8f9fc; color: #6b7280; font-weight: 700; }
     </style>
 </head>
 <body>
-    <div id="login-screen" class="h-screen flex items-center justify-center bg-gray-100">
-        <div class="bg-white p-10 rounded-xl shadow-xl border w-96 text-center">
-            <div class="w-12 h-12 bg-blue-600 rounded-xl mx-auto mb-4 flex items-center justify-center text-white font-bold text-xl">EST</div>
-            <h2 class="text-lg font-bold text-gray-800 mb-1">채용 이력서 분석 시스템</h2> [cite: 142]
-            <p class="text-xs text-gray-400 mb-8">접근하려면 비밀번호를 입력하세요</p> [cite: 143]
-            <input type="password" id="pw-input" class="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 ring-blue-500" placeholder="비밀번호 입력"> [cite: 152]
-            <button onclick="checkAuth()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">로그인</button> [cite: 153]
+    <div id="login-screen" class="h-screen flex items-center justify-center bg-[#f4f7f9]">
+        <div class="bg-white p-10 rounded-2xl shadow-xl border border-gray-100 w-96 text-center">
+            <div class="w-14 h-14 bg-[#4a6cf7] rounded-2xl mx-auto mb-6 flex items-center justify-center text-white font-bold text-xl shadow-lg">EST</div>
+            <h2 class="text-xl font-extrabold text-gray-800 mb-2">채용 이력서 분석 시스템</h2>
+            <p class="text-sm text-gray-400 mb-8 font-medium">접근하려면 비밀번호를 입력하세요</p>
+            
+            <input type="password" id="pw-input" 
+                class="w-full border border-gray-200 p-4 rounded-xl mb-4 outline-none focus:ring-2 ring-[#4a6cf7] transition-all text-center" 
+                placeholder="비밀번호 입력">
+            
+            <button onclick="checkAuth()" 
+                class="w-full bg-[#4a6cf7] text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-[0.98]">
+                로그인
+            </button>
         </div>
     </div>
 
     <div id="main-app" class="hidden flex min-h-screen">
-        <aside class="w-56 bg-[#1e3a8a] text-white flex flex-col shrink-0"> [cite: 83]
+        <aside class="w-60 bg-[#1e3a8a] text-white flex flex-col shrink-0 shadow-2xl">
             <div class="p-6 border-b border-white/10">
-                <h1 class="text-xl font-black italic">EST FAMILY</h1> [cite: 86-87]
+                <h1 class="text-xl font-black italic tracking-tighter">EST FAMILY</h1>
             </div>
             <nav class="p-4 space-y-2">
-                <button class="w-full text-left p-3 rounded text-sm opacity-60">📁 업로드 & 설정</button> [cite: 78]
-                <button class="w-full text-left p-3 rounded text-sm active-nav">📊 분석 결과</button> [cite: 80]
+                <button class="w-full text-left p-3 rounded-xl text-sm opacity-60 hover:opacity-100 transition">📁 이력서 업로드</button>
+                <button class="w-full text-left p-3 rounded-xl text-sm active-nav">📊 분석 결과 확인</button>
             </nav>
         </aside>
 
         <main class="flex-1 flex flex-col">
             <header class="bg-white border-b p-4 px-8 flex justify-between items-center shadow-sm">
-                <h2 class="font-bold text-gray-700">분석 결과</h2> [cite: 423]
-                <div class="text-xs font-bold text-green-600 flex items-center gap-1">
-                    <span class="w-2 h-2 bg-green-500 rounded-full"></span> 일반 사용자 [cite: 433-435]
+                <h2 class="font-bold text-gray-800 text-lg">분석 결과 리스트</h2>
+                <div class="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="text-xs font-bold text-green-700 uppercase">Online</span>
                 </div>
             </header>
 
             <div class="p-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-sm">총 <span id="count">0</span>명 분석 완료</h3> [cite: 296]
+                    <div>
+                        <h3 class="font-extrabold text-gray-800">총 <span id="count" class="text-blue-600">0</span>명의 데이터가 누적되었습니다</h3>
+                    </div>
                     <div class="flex gap-2">
-                        <button onclick="addMockData()" class="bg-white border px-3 py-1.5 rounded text-xs hover:bg-gray-50">샘플추가</button>
-                        <button onclick="downloadXLSX()" class="bg-[#4a6cf7] text-white px-4 py-2 rounded text-xs font-bold shadow-md hover:bg-blue-700">
-                            ⬇ XLSX 다운로드
-                        </button> [cite: 298]
+                        <button onclick="addMockData()" class="bg-white border border-gray-200 px-4 py-2 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 transition">샘플추가</button>
+                        <button onclick="downloadXLSX()" class="bg-[#4a6cf7] text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
+                            ⬇ 엑셀(XLSX) 다운로드
+                        </button>
                     </div>
                 </div>
 
-                <div class="bg-white rounded border overflow-x-auto shadow-sm">
+                <div class="bg-white rounded-xl border border-gray-100 overflow-x-auto shadow-sm">
                     <table id="result-table">
                         <thead>
                             <tr id="table-head"></tr>
                         </thead>
-                        <tbody id="table-body">
-                            </tbody>
+                        <tbody id="table-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -70,49 +79,57 @@
     </div>
 
     <script>
-        const DEFAULT_PW = "estsoft2024"; [cite: 9]
-        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접진행 여부", "이력서", "JD 적합도", "적합도 평가", "평가 근거"]; [cite: 11]
+        const DEFAULT_PW = "estsoft2024";
+        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접상태", "이력서", "적합도", "평가", "근거"];
         let results = JSON.parse(localStorage.getItem('est_data') || '[]');
 
-        // 1. 초기 실행
         window.onload = () => {
             renderHead();
             renderTable();
         };
 
-        // 2. 인증 로직
         function checkAuth() {
             const input = document.getElementById('pw-input').value;
             if (input === DEFAULT_PW) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
             } else {
-                alert("비밀번호가 틀렸습니다.");
+                alert("비밀번호가 일치하지 않습니다.");
             }
         }
 
-        // 3. 테이블 렌더링
         function renderHead() {
             const head = document.getElementById('table-head');
-            head.innerHTML = COLUMNS.map(c => `<th class="p-3">${c}</th>`).join('');
+            head.innerHTML = COLUMNS.map(c => `<th class="p-4 text-xs uppercase tracking-wider">${c}</th>`).join('');
         }
 
         function renderTable() {
             const body = document.getElementById('table-body');
             document.getElementById('count').innerText = results.length;
             
+            if (results.length === 0) {
+                body.innerHTML = `<tr><td colspan="14" class="p-20 text-gray-400 font-medium">데이터가 없습니다.</td></tr>`;
+                return;
+            }
+
             body.innerHTML = results.map((r, i) => `
-                <tr class="hover:bg-gray-50 border-b">
-                    <td class="text-gray-400">${results.length - i}</td>
+                <tr class="hover:bg-blue-50/30 transition border-b border-gray-50">
+                    <td class="text-gray-400 font-medium">${results.length - i}</td>
                     <td class="font-bold text-gray-800">${r.이름}</td>
-                    <td>${r.생년}</td>
-                    <td>${r.성별}</td>
-                    <td>${r.학력}</td>
-                    <td>${r.학교}</td>
-                    <td class="text-blue-600 font-medium whitespace-pre-line">${r.전공}</td>
-                    <td>${r.경력}</td>
-                    <td>${r.회사}</td>
-                    <td><select class="border rounded p-1"><option>미정</option><option>합격</option></select></td>
+                    <td class="text-gray-500">${r.생년}</td>
+                    <td class="text-gray-500">${r.성별}</td>
+                    <td class="text-gray-600">${r.학력}</td>
+                    <td class="text-gray-600">${r.학교}</td>
+                    <td class="text-blue-600 font-bold whitespace-pre-line leading-tight text-[10px]">${r.전공}</td>
+                    <td class="text-gray-600">${r.경력}</td>
+                    <td class="text-gray-800 font-medium">${r.회사}</td>
+                    <td>
+                        <select class="border border-gray-200 rounded-md px-2 py-1 text-[10px] bg-white outline-none focus:ring-1 ring-blue-400">
+                            <option>미정</option>
+                            <option>합격</option>
+                            <option>불합격</option>
+                        </select>
+                    </td>
                     <td class="text-gray-300">—</td>
                     <td class="text-gray-300">—</td>
                     <td class="text-gray-300">—</td>
@@ -121,7 +138,6 @@
             `).join('');
         }
 
-        // 4. 데이터 추가 및 엑셀 다운로드
         function addMockData() {
             const mock = {
                 이름: "문철민",
@@ -139,11 +155,11 @@
         }
 
         function downloadXLSX() {
-            if (results.length === 0) return alert("데이터가 없습니다.");
-            const ws = XLSX.utils.json_to_sheet(results); [cite: 224]
-            const wb = XLSX.utils.book_new(); [cite: 225]
-            XLSX.utils.book_append_sheet(wb, ws, "분석결과"); [cite: 226]
-            XLSX.writeFile(wb, "이력서_분석결과.xlsx"); [cite: 228]
+            if (results.length === 0) return alert("저장된 데이터가 없습니다.");
+            const ws = XLSX.utils.json_to_sheet(results);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "분석결과");
+            XLSX.writeFile(wb, "EST_FAMILY_이력서분석결과.xlsx");
         }
     </script>
 </body>
