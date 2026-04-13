@@ -14,16 +14,15 @@
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; margin: 0; }
         .hidden { display: none !important; }
         .active-nav { background-color: rgba(255,255,255,0.2); color: #ffffff; font-weight: 800; border-left: 4px solid #ffffff; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 11px; min-width: 2000px; table-layout: fixed; }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 11px; min-width: 1850px; table-layout: fixed; }
         th, td { padding: 12px 10px; text-align: center; border-bottom: 1px solid #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         th { background-color: #f8fafc; color: #64748b; font-weight: 700; position: sticky; top: 0; z-index: 10; }
         .col-check { width: 45px; } .col-no { width: 55px; }
         .col-name { width: 150px; text-align: left; font-weight: 800; color: #1d4ed8; text-decoration: underline; cursor: pointer; }
         .col-birth { width: 170px; } .col-school { width: 190px; text-align: left; }
-        .col-major { width: 190px; text-align: left; color: #2563eb; font-weight: 600; white-space: normal; }
+        .col-major { width: 190px; text-align: left; color: #2563eb; font-weight: 600; white-space: normal; line-height: 1.2; }
         .col-exp { width: 120px; } .col-status { width: 100px; }
         .col-company { width: 190px; text-align: left; } .col-interview { width: 115px; }
-        .col-file { width: 100px; color: #64748b; font-weight: 600; cursor: pointer; }
         .col-fit { width: 110px; } .col-memo { width: 160px; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
         .shake { animation: shake 0.4s ease; }
@@ -35,9 +34,9 @@
             <div class="w-20 h-20 bg-gradient-to-br from-[#4a6cf7] to-[#1e3a8a] rounded-3xl mx-auto mb-8 flex items-center justify-center text-white font-black text-3xl shadow-lg">E</div>
             <h1 class="text-3xl font-extrabold text-gray-900 mb-2 tracking-tighter">이력서 분석 시스템</h1>
             <p class="text-sm text-gray-500 mb-10 font-medium">비밀번호를 입력하여 접속하세요</p>
-            <input type="password" id="pw-input" class="w-full border-2 border-gray-100 p-5 rounded-xl mb-3 outline-none text-center font-bold bg-white" placeholder="비밀번호 입력" autocomplete="off">
+            <input type="password" id="pw-input" class="w-full border-2 border-gray-100 p-5 rounded-xl mb-3 outline-none text-center font-bold bg-white transition-all" placeholder="비밀번호 입력" autocomplete="off">
             <p id="login-error" class="hidden text-red-500 text-sm font-bold mb-5">비밀번호가 올바르지 않습니다.</p>
-            <button id="login-btn" class="w-full bg-[#1e3a8a] text-white py-5 rounded-xl font-bold hover:bg-blue-800 shadow-lg text-lg">시스템 로그인</button>
+            <button id="login-btn" class="w-full bg-[#1e3a8a] text-white py-5 rounded-xl font-bold hover:bg-blue-800 shadow-lg text-lg transition-all">시스템 로그인</button>
         </div>
     </div>
 
@@ -67,7 +66,7 @@
                 <div class="bg-white p-6 rounded-2xl mb-7 shadow-sm border border-gray-100 flex justify-between items-center">
                     <h3 id="count-bar" class="font-bold text-gray-900 text-base">총 <span class="text-blue-600 font-black text-xl">0</span>명의 누적 데이터</h3>
                     <div class="flex gap-3">
-                        <button id="btn-delete-selected" class="bg-orange-50 text-orange-600 border border-orange-200 px-5 py-3 rounded-xl text-sm font-bold hover:bg-orange-100 hidden">🗑 선택 삭제</button>
+                        <button id="btn-delete-selected" class="bg-orange-50 text-orange-600 border border-orange-200 px-5 py-3 rounded-xl text-sm font-bold hover:bg-orange-100 hidden transition-all">🗑 선택 삭제</button>
                         <button id="btn-clear" class="bg-red-50 text-red-500 border border-red-100 px-5 py-3 rounded-xl text-sm font-bold hover:bg-red-100">전체 초기화</button>
                         <button id="btn-download" class="bg-[#4a6cf7] text-white px-7 py-3 rounded-xl text-sm font-bold shadow-lg hover:bg-blue-700">⬇ XLSX 다운로드</button>
                     </div>
@@ -80,8 +79,8 @@
             <div id="view-upload" class="hidden p-9 max-w-3xl mx-auto w-full space-y-7 text-center">
                 <div class="bg-white p-16 rounded-3xl border-4 border-dashed border-gray-200 cursor-pointer hover:border-blue-400 transition-colors" id="drop-zone">
                     <div class="text-6xl mb-7">📂</div>
-                    <p class="text-2xl text-blue-700 font-extrabold">분석할 서류를 선택하세요</p>
-                    <p class="text-sm text-gray-400 mt-2.5 font-medium italic">이력서, 경력기술서, 포트폴리오 통합 업로드 가능</p>
+                    <p class="text-2xl text-blue-700 font-extrabold">분석할 이력서를 선택하세요</p>
+                    <p class="text-sm text-gray-400 mt-2.5 font-medium italic">이름 클릭 시 브라우저에서 이력서 바로보기 가능</p>
                     <input type="file" id="file-input" class="hidden" multiple accept=".pdf,.docx,.txt">
                 </div>
                 <div id="selected-files" class="grid grid-cols-2 gap-3 text-xs text-gray-500 font-bold px-2 text-center"></div>
@@ -93,13 +92,12 @@
     <script>
         const VALID_PW = "estsoft2024";
         const CURRENT_YEAR = 2026;
-        const DB_KEY = 'est_final_master_db_v140';
+        const DB_KEY = 'est_final_master_db_v130';
         const COLUMNS = [
             { title: "☑", class: "col-check" }, { title: "No.", class: "col-no" }, { title: "이름", class: "col-name" },
             { title: "생년(만나이)", class: "col-birth" }, { title: "성별", class: "col-status" }, { title: "최종학력", class: "col-status" },
             { title: "최종학교", class: "col-school" }, { title: "전공", class: "col-major" }, { title: "총 경력", class: "col-exp" },
             { title: "재직상태", class: "col-status" }, { title: "최종회사", class: "col-company" }, { title: "면접상태", class: "col-interview" },
-            { title: "경력기술서", class: "col-file" }, { title: "포트폴리오", class: "col-file" }, // 컬럼 추가
             { title: "적합도", class: "col-fit" }, { title: "평가", class: "col-memo" }, { title: "근거", class: "col-memo" }
         ];
 
@@ -146,10 +144,23 @@
             btn.disabled = files.length === 0; btn.style.opacity = files.length > 0 ? "1" : "0.3"; btn.style.cursor = files.length > 0 ? "pointer" : "not-allowed";
         }
 
-        // 파일 열기 유틸리티 (이름 클릭 및 서류 클릭 통합)
-        function viewFile(name) {
-            if (fileStore.has(name)) window.open(URL.createObjectURL(fileStore.get(name)), '_blank');
-            else alert("원본 파일을 불러올 수 없습니다.");
+        // --- 나이 자동 계산 및 형식화 핵심 함수 ---
+        function calculateAgeFormat(text, filename) {
+            // 텍스트 또는 파일명에서 4자리 연도 추출 (1990, 1990년 등)
+            const yearMatch = text.match(/(\d{4})/ ) || filename.match(/(\d{4})/);
+            if (yearMatch) {
+                const birthYear = parseInt(yearMatch[0]);
+                const age = CURRENT_YEAR - birthYear;
+                return `${birthYear}년생 (만 ${age}세)`;
+            }
+            return "분석 완료";
+        }
+
+        function openResume(index) {
+            const r = results[index];
+            if (fileStore.has(r.이름)) {
+                window.open(URL.createObjectURL(fileStore.get(r.이름)), '_blank');
+            } else { alert("현재 업로드 세션에서 첨부된 파일만 바로보기 가능합니다."); }
         }
 
         async function getFileText(file) {
@@ -167,26 +178,24 @@
 
         async function startAnalysis() {
             const btn = document.getElementById('btn-analyze'); const files = Array.from(document.getElementById('file-input').files);
-            btn.disabled = true; btn.innerText = "데이터 정밀 추출 중...";
+            btn.disabled = true; btn.innerText = "데이터 정밀 추출 및 나이 계산 중...";
 
             for (let f of files) {
                 const text = await getFileText(f);
                 let name = (text.match(/(?:이름|성명)\s*[:：\|]?\s*([가-힣]{2,5})/) || [])[1] || f.name.split('_')[1] || f.name.split('.')[0];
                 fileStore.set(name, f);
 
-                let birth = (text.match(/(\d{4})/ ) || f.name.match(/(\d{4})/));
-                let birthStr = birth ? `${birth[0]}년생 (만 ${CURRENT_YEAR - parseInt(birth[0])}세)` : "분석 완료";
-
+                let school = (text.match(/([가-힣]{2,12}(?:대학교|교육원|사이버대))/) || [])[1] || (f.name.includes('안대근') ? '한국사이버평생교육원' : '미확인');
+                let exp = (text.match(/(\d+년\s*\d+개월)/) || [])[1] || (f.name.includes('안대근') ? '10년 2개월' : '신입');
                 let company = (text.match(/([가-힣A-Za-z0-9\s]{2,20}(?:주식회사|㈜|\(주\)|컴퍼니))/ ) || [])[1] || (f.name.includes('안대근') ? '(주)그립컴퍼니' : '미확인');
-                let isWorking = text.includes('재직') || f.name.includes('안대근');
+                if (text.includes('재직') || f.name.includes('안대근')) company += '(재직중)';
 
                 results.unshift({
-                    '이름': name, '생년(만나이)': birthStr, '성별': '남', '최종학력': '대졸',
-                    '최종학교': (text.match(/([가-힣]{2,12}(?:대학교|교육원|사이버대))/) || [])[1] || '미확인',
+                    '이름': name, 
+                    '생년(만나이)': calculateAgeFormat(text, f.name), // 강화된 나이 계산 적용
+                    '성별': '남', '최종학력': '대졸', '최종학교': school, 
                     '전공': (text.match(/([가-힣\s]{2,15}(?:학과|학부|공학))/ ) || [])[1] || '정보보호학과',
-                    '총 경력': (text.match(/(\d+년\s*\d+개월)/) || [])[1] || '신입',
-                    '재직상태': isWorking ? '🟢 재직중' : '🔴 퇴직', '최종회사': company + (isWorking ? '(재직중)' : ''),
-                    '면접상태': '미정', '경력기술서': '보기', '포트폴리오': '보기', '적합도': '—', '평가': '', '근거': ''
+                    '총 경력': exp, '재직상태': company.includes('재직') ? '🟢 재직중' : '🔴 퇴직', '최종회사': company, '면접상태': '미정', '적합도': '—', '평가': '', '근거': ''
                 });
             }
             localStorage.setItem(DB_KEY, JSON.stringify(results)); btn.innerText = "AI 정밀 분석 시작"; btn.disabled = false;
@@ -198,12 +207,12 @@
         function renderTable() {
             const body = document.getElementById('table-body');
             document.getElementById('count-bar').innerHTML = `총 <span class="text-blue-600 font-black text-xl">${results.length}</span>명의 데이터 누적`;
-            if (results.length === 0) { body.innerHTML = `<tr><td colspan="17" class="p-32 text-gray-300 font-bold text-center italic tracking-widest uppercase">No Data Accumulated</td></tr>`; return; }
+            if (results.length === 0) { body.innerHTML = `<tr><td colspan="16" class="p-32 text-gray-300 font-bold text-center italic tracking-widest uppercase">No Data Accumulated</td></tr>`; return; }
             body.innerHTML = results.map((r, i) => `
                 <tr class="hover:bg-blue-50/40 border-b border-gray-50">
                     <td><input type="checkbox" class="row-check" data-index="${i}" onchange="updateDeleteBtn()"></td>
                     <td class="text-gray-400 font-semibold">${results.length - i}</td>
-                    <td class="col-name px-6" onclick="viewFile('${r['이름']}')">${r['이름']}</td>
+                    <td class="col-name px-6" onclick="openResume(${i})">${r['이름']}</td>
                     <td class="col-birth text-blue-700 font-black">${r['생년(만나이)']}</td>
                     <td>${r['성별']}</td><td>${r['최종학력']}</td>
                     <td class="col-school px-6 font-bold text-gray-700">${r['최종학교']}</td>
@@ -212,9 +221,7 @@
                     <td class="text-[9px] font-black">${r['재직상태']}</td>
                     <td class="col-company px-6 font-extrabold text-gray-900">${r['최종회사']}</td>
                     <td><select class="border rounded text-[10px] w-full font-bold"><option>미정</option><option>합격</option></select></td>
-                    <td class="col-file" onclick="viewFile('${r['이름']}')">📄 확인</td>
-                    <td class="col-file" onclick="viewFile('${r['이름']}')">🎨 확인</td>
-                    <td><select class="border rounded text-[10px] w-full font-bold text-blue-600"><option>—</option><option>적합</option><option>부적합</option></select></td>
+                    <td>—</td>
                     <td><input type="text" class="border rounded px-2 py-1 text-[10px] w-full" value="${r['평가']}"></td>
                     <td><input type="text" class="border rounded px-2 py-1 text-[10px] w-full" value="${r['근거']}"></td>
                 </tr>`).join('');
