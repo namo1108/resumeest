@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #f9fafb; margin: 0; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         .active-nav { background-color: rgba(255,255,255,0.12); color: #ffffff; font-weight: 700; }
         table { border-collapse: collapse; width: 100%; font-size: 11px; }
         th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: center; }
@@ -21,8 +21,8 @@
             <div class="w-14 h-14 bg-[#4a6cf7] rounded-2xl mx-auto mb-6 flex items-center justify-center text-white font-bold text-xl shadow-lg">EST</div>
             <h2 class="text-xl font-extrabold text-gray-800 mb-2">채용 이력서 분석 시스템</h2>
             <p class="text-sm text-gray-400 mb-8 font-medium">접근하려면 비밀번호를 입력하세요</p>
-            <input type="password" id="pw-input" class="w-full border border-gray-200 p-4 rounded-xl mb-4 outline-none focus:ring-2 ring-[#4a6cf7] text-center" placeholder="비밀번호 입력">
-            <button onclick="checkAuth()" class="w-full bg-[#4a6cf7] text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all">로그인</button>
+            <input type="password" id="pw-input" class="w-full border border-gray-200 p-4 rounded-xl mb-4 outline-none focus:ring-2 ring-[#4a6cf7] text-center" placeholder="비밀번호 입력" onkeypress="if(event.keyCode==13) checkAuth()">
+            <button onclick="checkAuth()" class="w-full bg-[#4a6cf7] text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-all">로그인</button>
         </div>
     </div>
 
@@ -37,7 +37,7 @@
             </nav>
         </aside>
 
-        <main class="flex-1 flex flex-col">
+        <main class="flex-1 flex flex-col overflow-hidden">
             <header class="bg-white border-b p-4 px-8 flex justify-between items-center shadow-sm">
                 <h2 id="header-title" class="font-bold text-gray-800 text-lg">분석 결과 리스트</h2>
                 <div class="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full">
@@ -46,15 +46,13 @@
                 </div>
             </header>
 
-            <div id="tab-result" class="p-8">
+            <div id="tab-result" class="p-8 flex-1 overflow-auto">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-extrabold text-gray-800">총 <span id="count" class="text-blue-600">0</span>명의 데이터가 누적되었습니다</h3>
-                    <div class="flex gap-2">
-                        <button onclick="downloadXLSX()" class="bg-[#4a6cf7] text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow-lg hover:bg-blue-700 transition">⬇ 엑셀(XLSX) 다운로드</button>
-                    </div>
+                    <h3 class="font-extrabold text-gray-800 text-sm">총 <span id="count" class="text-blue-600">0</span>명의 데이터가 누적되었습니다</h3>
+                    <button onclick="downloadXLSX()" class="bg-[#4a6cf7] text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow-lg hover:bg-blue-700 transition">⬇ 엑셀(XLSX) 다운로드</button>
                 </div>
                 <div class="bg-white rounded-xl border border-gray-100 overflow-x-auto shadow-sm">
-                    <table>
+                    <table id="result-table">
                         <thead><tr id="table-head"></tr></thead>
                         <tbody id="table-body"></tbody>
                     </table>
@@ -62,82 +60,75 @@
             </div>
 
             <div id="tab-upload" class="hidden p-8 max-w-2xl mx-auto w-full space-y-6">
-                <div class="bg-white p-8 rounded-2xl border-2 border-dashed border-gray-200 text-center cursor-pointer hover:border-blue-400 transition" onclick="document.getElementById('file-input').click()">
+                <div class="bg-white p-12 rounded-2xl border-2 border-dashed border-gray-200 text-center cursor-pointer hover:border-blue-400 transition" onclick="document.getElementById('file-input').click()">
                     <div class="text-4xl mb-4">📄</div>
                     <p class="text-blue-600 font-bold">클릭하여 이력서 파일(PDF/TXT)을 선택하세요</p>
-                    <p class="text-xs text-gray-400 mt-2">최대 10개까지 동시 분석 가능</p>
                     <input type="file" id="file-input" class="hidden" multiple accept=".pdf,.txt" onchange="handleFileSelect(this)">
                 </div>
-                <div id="selected-files" class="space-y-2 text-sm text-gray-600"></div>
-                <button id="btn-analyze" onclick="startAnalysis()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold opacity-50 cursor-not-allowed transition" disabled>분석 시작</button>
+                <div id="selected-files" class="space-y-2 text-sm text-gray-600 font-medium"></div>
+                <button id="btn-analyze" onclick="startAnalysis()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold opacity-50 cursor-not-allowed transition" disabled>AI 분석 시작</button>
             </div>
         </main>
     </div>
 
     <script>
-        const DEFAULT_PW = "estsoft2024"; [cite: 9]
-        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접상태", "이력서", "적합도", "평가", "근거"]; [cite: 11]
-        let results = JSON.parse(localStorage.getItem('est_data') || '[]');
+        const DEFAULT_PW = "estsoft2024";
+        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접상태", "이력서", "적합도", "평가", "근거"];
+        let results = JSON.parse(localStorage.getItem('est_data_v3') || '[]');
         let selectedFiles = [];
 
-        window.onload = () => {
-            renderHead();
-            renderTable();
-        };
-
+        // 1. 인증 처리
         function checkAuth() {
             if (document.getElementById('pw-input').value === DEFAULT_PW) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
+                renderHead();
+                renderTable();
             } else { alert("비밀번호가 틀렸습니다."); }
         }
 
+        // 2. 탭 전환
         function switchTab(tab) {
             document.getElementById('tab-upload').classList.toggle('hidden', tab !== 'upload');
             document.getElementById('tab-result').classList.toggle('hidden', tab !== 'result');
             document.getElementById('nav-upload').classList.toggle('active-nav', tab === 'upload');
             document.getElementById('nav-result').classList.toggle('active-nav', tab === 'result');
-            document.getElementById('header-title').innerText = tab === 'upload' ? '이력서 업로드' : '분석 결과 리스트';
+            document.getElementById('header-title').innerText = (tab === 'upload') ? '이력서 업로드' : '분석 결과 리스트';
         }
 
+        // 3. 파일 처리 및 시뮬레이션
         function handleFileSelect(input) {
             selectedFiles = Array.from(input.files);
-            const list = document.getElementById('selected-files');
-            list.innerHTML = selectedFiles.map(f => `<div>✅ ${f.name} (${(f.size/1024).toFixed(1)} KB)</div>`).join('');
+            document.getElementById('selected-files').innerHTML = selectedFiles.map(f => `<div>✅ ${f.name} 대기 중</div>`).join('');
             const btn = document.getElementById('btn-analyze');
             btn.disabled = selectedFiles.length === 0;
-            btn.classList.toggle('opacity-50', selectedFiles.length === 0);
-            btn.classList.toggle('cursor-not-allowed', selectedFiles.length === 0);
+            btn.style.opacity = selectedFiles.length === 0 ? "0.5" : "1";
+            btn.style.cursor = selectedFiles.length === 0 ? "not-allowed" : "pointer";
         }
 
         function startAnalysis() {
             const btn = document.getElementById('btn-analyze');
-            btn.innerText = "분석 중...";
+            btn.innerText = "분석 진행 중...";
             btn.disabled = true;
 
             setTimeout(() => {
-                selectedFiles.forEach((file, i) => {
+                selectedFiles.forEach(file => {
                     results.unshift({
-                        이름: file.name.split('.')[0],
-                        생년: "분석 완료",
-                        성별: "남",
-                        학력: "대졸",
-                        학교: "대학교",
-                        전공: "컴퓨터공학",
-                        경력: "3년",
-                        회사: "ESTSOFT"
+                        "이름": file.name.split('.')[0], "생년(만나이)": "분석 완료", "성별": "남", "최종학력": "대졸",
+                        "최종학교": "대학교", "전공": "컴퓨터공학", "총 경력": "3년", "최종회사": "ESTSOFT", "면접상태": "미정"
                     });
                 });
-                localStorage.setItem('est_data', JSON.stringify(results));
-                btn.innerText = "분석 시작";
+                localStorage.setItem('est_data_v3', JSON.stringify(results));
+                btn.innerText = "AI 분석 시작";
                 btn.disabled = false;
                 selectedFiles = [];
                 document.getElementById('selected-files').innerHTML = "";
                 renderTable();
                 switchTab('result');
-            }, 2000);
+            }, 1500);
         }
 
+        // 4. 테이블 렌더링
         function renderHead() {
             document.getElementById('table-head').innerHTML = COLUMNS.map(c => `<th class="p-4 text-xs">${c}</th>`).join('');
         }
@@ -145,25 +136,29 @@
         function renderTable() {
             const body = document.getElementById('table-body');
             document.getElementById('count').innerText = results.length;
-            if (results.length === 0) { body.innerHTML = `<tr><td colspan="14" class="p-20 text-gray-400">데이터가 없습니다.</td></tr>`; return; }
+            if (results.length === 0) {
+                body.innerHTML = `<tr><td colspan="14" class="p-20 text-gray-400">데이터가 없습니다.</td></tr>`;
+                return;
+            }
             body.innerHTML = results.map((r, i) => `
                 <tr class="hover:bg-gray-50 border-b">
                     <td class="text-gray-400">${results.length - i}</td>
-                    <td class="font-bold text-gray-800">${r.이름}</td>
-                    <td>${r.생년 || '-'}</td><td>${r.성별 || '-'}</td><td>${r.학력 || '-'}</td><td>${r.학교 || '-'}</td>
-                    <td class="text-blue-600 font-bold whitespace-pre-line text-[10px]">${r.전공 || '-'}</td>
-                    <td>${r.경력 || '-'}</td><td>${r.회사 || '-'}</td>
-                    <td><select class="border rounded px-1 py-1 text-[10px] bg-white"><option>미정</option><option>합격</option></select></td>
-                    <td class="text-gray-300">—</td><td class="text-gray-300">—</td><td class="text-gray-300">—</td><td class="text-gray-300">—</td>
+                    <td class="font-bold text-gray-800">${r["이름"]}</td>
+                    <td>${r["생년(만나이)"] || '-'}</td><td>${r["성별"] || '-'}</td><td>${r["최종학력"] || '-'}</td><td>${r["최종학교"] || '-'}</td>
+                    <td class="text-blue-600 font-bold text-[10px]">${r["전공"] || '-'}</td>
+                    <td>${r["총 경력"] || '-'}</td><td>${r["최종회사"] || '-'}</td>
+                    <td><select class="border rounded p-1 text-[10px] bg-white"><option>미정</option><option>합격</option></select></td>
+                    <td colspan="4" class="text-gray-300">—</td>
                 </tr>`).join('');
         }
 
+        // 5. 엑셀 다운로드
         function downloadXLSX() {
             if (results.length === 0) return alert("데이터가 없습니다.");
             const ws = XLSX.utils.json_to_sheet(results);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "분석결과");
-            XLSX.writeFile(wb, "EST_이력서분석.xlsx");
+            XLSX.writeFile(wb, "EST_FAMILY_분석결과.xlsx");
         }
     </script>
 </body>
