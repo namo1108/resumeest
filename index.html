@@ -10,7 +10,7 @@
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #f9fafb; margin: 0; }
         .hidden { display: none !important; }
         .active-nav { background-color: rgba(255,255,255,0.12); color: #ffffff; font-weight: 700; }
-        table { border-collapse: collapse; width: 100%; font-size: 11px; }
+        table { border-collapse: collapse; width: 100%; font-size: 11px; min-width: 1200px; }
         th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: center; }
         th { background-color: #f8f9fc; color: #6b7280; font-weight: 700; }
     </style>
@@ -21,40 +21,50 @@
             <div class="w-14 h-14 bg-[#4a6cf7] rounded-2xl mx-auto mb-6 flex items-center justify-center text-white font-bold text-xl shadow-lg">EST</div>
             <h2 class="text-xl font-extrabold text-gray-800 mb-2">채용 이력서 분석 시스템</h2>
             <p class="text-sm text-gray-400 mb-8 font-medium">접근하려면 비밀번호를 입력하세요</p>
-            <input type="password" id="pw-input" class="w-full border border-gray-200 p-4 rounded-xl mb-4 outline-none focus:ring-2 ring-[#4a6cf7] text-center" placeholder="비밀번호 입력" onkeypress="if(event.keyCode==13) checkAuth()">
-            <button onclick="checkAuth()" class="w-full bg-[#4a6cf7] text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-all">로그인</button>
+            
+            <input type="password" id="pw-input" 
+                class="w-full border border-gray-200 p-4 rounded-xl mb-4 outline-none focus:ring-2 ring-[#4a6cf7] text-center" 
+                placeholder="비밀번호 입력"
+                [cite_start]onkeydown="if(event.key === 'Enter') { checkAuth(); }"> 
+            
+            <button onclick="checkAuth()" 
+                class="w-full bg-[#4a6cf7] text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">
+                로그인
+            </button> [cite: 153]
         </div>
     </div>
 
     <div id="main-app" class="hidden flex min-h-screen">
         <aside class="w-60 bg-[#1e3a8a] text-white flex flex-col shrink-0 shadow-2xl">
             <div class="p-6 border-b border-white/10">
-                <h1 class="text-xl font-black italic tracking-tighter">EST FAMILY</h1>
+                <h1 class="text-xl font-black italic tracking-tighter">EST FAMILY</h1> [cite: 86-87]
             </div>
-            <nav class="p-4 space-y-2">
-                <button onclick="switchTab('upload')" id="nav-upload" class="w-full text-left p-3 rounded-xl text-sm opacity-60 hover:opacity-100 transition">📁 이력서 업로드</button>
-                <button onclick="switchTab('result')" id="nav-result" class="w-full text-left p-3 rounded-xl text-sm active-nav">📊 분석 결과 확인</button>
+            <nav class="p-4 space-y-2 font-medium">
+                <button onclick="switchTab('upload')" id="nav-upload" class="w-full text-left p-3 rounded-xl text-sm opacity-60 hover:opacity-100 transition">📁 이력서 업로드</button> [cite: 78, 94]
+                <button onclick="switchTab('result')" id="nav-result" class="w-full text-left p-3 rounded-xl text-sm active-nav">📊 분석 결과 확인</button> [cite: 80, 94]
             </nav>
         </aside>
 
         <main class="flex-1 flex flex-col overflow-hidden">
             <header class="bg-white border-b p-4 px-8 flex justify-between items-center shadow-sm">
-                <h2 id="header-title" class="font-bold text-gray-800 text-lg">분석 결과 리스트</h2>
+                <h2 id="header-title" class="font-bold text-gray-800 text-lg">분석 결과 리스트</h2> [cite: 421-424]
                 <div class="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span class="text-xs font-bold text-green-700 uppercase">Online</span>
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span class="text-xs font-bold text-green-700 uppercase tracking-wider">Online</span> [cite: 433-435]
                 </div>
             </header>
 
             <div id="tab-result" class="p-8 flex-1 overflow-auto">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-extrabold text-gray-800 text-sm">총 <span id="count" class="text-blue-600">0</span>명의 데이터가 누적되었습니다</h3>
-                    <button onclick="downloadXLSX()" class="bg-[#4a6cf7] text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow-lg hover:bg-blue-700 transition">⬇ 엑셀(XLSX) 다운로드</button>
+                    <h3 class="font-extrabold text-gray-800 text-sm tracking-tight">총 <span id="count" class="text-blue-600">0</span>명의 데이터가 누적되었습니다</h3> [cite: 296]
+                    <button onclick="downloadXLSX()" class="bg-[#4a6cf7] text-white px-5 py-2.5 rounded-lg text-xs font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition">
+                        ⬇ XLSX 다운로드
+                    </button> [cite: 298]
                 </div>
                 <div class="bg-white rounded-xl border border-gray-100 overflow-x-auto shadow-sm">
                     <table>
-                        <thead><tr id="table-head"></tr></thead>
-                        <tbody id="table-body"></tbody>
+                        <thead id="table-head"></thead>
+                        <tbody id="table-body"></tbody> [cite: 312]
                     </table>
                 </div>
             </div>
@@ -62,107 +72,128 @@
             <div id="tab-upload" class="hidden p-8 max-w-2xl mx-auto w-full space-y-6">
                 <div class="bg-white p-12 rounded-2xl border-2 border-dashed border-gray-200 text-center cursor-pointer hover:border-blue-400 transition" onclick="document.getElementById('file-input').click()">
                     <div class="text-4xl mb-4">📄</div>
-                    <p class="text-blue-600 font-bold">클릭하여 이력서 파일(PDF/TXT)을 선택하세요</p>
-                    <input type="file" id="file-input" class="hidden" multiple accept=".pdf,.txt" onchange="handleFileSelect(this)">
+                    <p class="text-blue-600 font-bold">클릭하여 이력서 파일(PDF/TXT)을 선택하세요</p> [cite: 241-242]
+                    <input type="file" id="file-input" class="hidden" multiple accept=".pdf,.txt" onchange="handleFileSelect(this)"> [cite: 243-244]
                 </div>
-                <div id="selected-files" class="space-y-2 text-sm text-gray-600 font-medium"></div>
-                <button id="btn-analyze" onclick="startAnalysis()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold opacity-50 cursor-not-allowed transition" disabled>AI 분석 시작</button>
+                <div id="selected-files" class="space-y-2 text-sm text-gray-600 font-semibold"></div>
+                <button id="btn-analyze" onclick="startAnalysis()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold opacity-50 cursor-not-allowed transition" disabled>AI 분석 시작</button> [cite: 273-275]
             </div>
         </main>
     </div>
 
     <script>
+        // 상수 및 데이터 관리 [cite: 9, 11]
         const DEFAULT_PW = "estsoft2024";
-        const CURRENT_YEAR = 2026; // 현재 시점 기준
+        const CURRENT_YEAR = 2026;
         const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접상태", "이력서", "적합도", "평가", "근거"];
-        let results = JSON.parse(localStorage.getItem('est_data_v5') || '[]');
+        
+        // 로컬 스토리지에서 누적 데이터 로드
+        let results = JSON.parse(localStorage.getItem('est_data_v_final') || '[]');
+        let selectedFiles = [];
 
+        // 초기 화면 설정
+        window.onload = () => {
+            renderHead();
+            renderTable();
+        };
+
+        // 1. 인증 기능 (가장 중요) 
         function checkAuth() {
-            if (document.getElementById('pw-input').value === DEFAULT_PW) {
+            const inputVal = document.getElementById('pw-input').value;
+            if (inputVal === DEFAULT_PW) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
-                renderHead(); renderTable();
-            } else { alert("비밀번호가 틀렸습니다."); }
+            } else {
+                alert("비밀번호가 올바르지 않습니다.");
+                document.getElementById('pw-input').value = "";
+            }
         }
 
+        // 2. 탭 전환 기능 [cite: 91-94]
         function switchTab(tab) {
             document.getElementById('tab-upload').classList.toggle('hidden', tab !== 'upload');
             document.getElementById('tab-result').classList.toggle('hidden', tab !== 'result');
             document.getElementById('nav-upload').classList.toggle('active-nav', tab === 'upload');
             document.getElementById('nav-result').classList.toggle('active-nav', tab === 'result');
+            document.getElementById('header-title').innerText = (tab === 'upload') ? '이력서 업로드' : '분석 결과 리스트';
         }
 
+        // 3. 파일 처리 및 분석 로직 [cite: 230, 273-275]
         function handleFileSelect(input) {
-            const list = document.getElementById('selected-files');
-            const files = Array.from(input.files);
-            list.innerHTML = files.map(f => `<div>✅ ${f.name}</div>`).join('');
+            selectedFiles = Array.from(input.files);
+            document.getElementById('selected-files').innerHTML = selectedFiles.map(f => `<div>✅ ${f.name} 대기 중</div>`).join('');
             const btn = document.getElementById('btn-analyze');
-            btn.disabled = files.length === 0;
-            btn.style.opacity = files.length === 0 ? "0.5" : "1";
-            btn.style.cursor = files.length === 0 ? "not-allowed" : "pointer";
+            btn.disabled = selectedFiles.length === 0;
+            btn.style.opacity = selectedFiles.length === 0 ? "0.5" : "1";
+            btn.style.cursor = selectedFiles.length === 0 ? "not-allowed" : "pointer";
         }
 
-        // 나이 계산 로직 추가 
-        function calculateAge(birthText) {
-            const yearMatch = birthText.match(/\d{4}/); // 4자리 연도 추출
-            if (yearMatch) {
-                const birthYear = parseInt(yearMatch[0]);
-                const age = CURRENT_YEAR - birthYear;
-                return `${birthYear}년생 (만 ${age}세)`; [cite: 167]
-            }
-            return birthText || "미상";
-        }
-
-        async function startAnalysis() {
+        function startAnalysis() {
             const btn = document.getElementById('btn-analyze');
-            const files = Array.from(document.getElementById('file-input').files);
-            btn.innerText = "나이 계산 및 데이터 분석 중...";
+            btn.innerText = "데이터 분석 및 나이 계산 중..."; [cite: 275]
             btn.disabled = true;
 
             setTimeout(() => {
-                files.forEach(file => {
-                    // 예시 생년 데이터 (실제 AI 분석 결과에서 가져온다고 가정) 
-                    const mockBirth = "1994년"; 
-                    
+                selectedFiles.forEach(file => {
+                    const birthYear = 1990 + Math.floor(Math.random() * 15); // 예시 생년
                     results.unshift({
+                        "No.": 0,
                         "이름": file.name.split('.')[0],
-                        "생년(만나이)": calculateAge(mockBirth), // 자동 계산 함수 적용
+                        "생년(만나이)": `${birthYear}년생 (만 ${CURRENT_YEAR - birthYear}세)`,
                         "성별": "남", "최종학력": "대졸", "최종학교": "대학교", "전공": "컴퓨터공학",
                         "총 경력": "3년", "최종회사": "ESTSOFT", "면접상태": "미정"
                     });
                 });
-                localStorage.setItem('est_data_v5', JSON.stringify(results));
-                btn.innerText = "AI 분석 시작"; btn.disabled = false;
-                renderTable(); switchTab('result');
+                localStorage.setItem('est_data_v_final', JSON.stringify(results));
+                btn.innerText = "AI 분석 시작";
+                btn.disabled = false;
+                selectedFiles = [];
+                document.getElementById('selected-files').innerHTML = "";
+                renderTable();
+                switchTab('result');
             }, 1500);
         }
 
+        // 4. 테이블 렌더링 [cite: 302-350]
         function renderHead() {
-            document.getElementById('table-head').innerHTML = COLUMNS.map(c => `<th class="p-4 text-xs">${c}</th>`).join('');
+            const head = document.getElementById('table-head');
+            head.innerHTML = `<tr>${COLUMNS.map(c => `<th>${c}</th>`).join('')}</tr>`;
         }
 
         function renderTable() {
             const body = document.getElementById('table-body');
             document.getElementById('count').innerText = results.length;
-            if (results.length === 0) { body.innerHTML = `<tr><td colspan="14" class="p-20 text-gray-400">데이터가 없습니다.</td></tr>`; return; }
+            
+            if (results.length === 0) {
+                body.innerHTML = `<tr><td colspan="14" class="p-20 text-gray-400 font-medium">분석된 데이터가 없습니다.</td></tr>`;
+                return;
+            }
+
             body.innerHTML = results.map((r, i) => `
                 <tr class="hover:bg-gray-50 border-b">
-                    <td class="text-gray-400">${results.length - i}</td>
+                    <td class="text-gray-400 font-semibold">${results.length - i}</td>
                     <td class="font-bold text-gray-800">${r["이름"]}</td>
-                    <td class="text-blue-700 font-medium">${r["생년(만나이)"]}</td>
+                    <td class="text-blue-700 font-bold">${r["생년(만나이)"]}</td>
                     <td>${r["성별"]}</td><td>${r["최종학력"]}</td><td>${r["최종학교"]}</td>
-                    <td class="text-blue-600 font-bold text-[10px]">${r["전공"]}</td>
+                    <td class="text-blue-600 font-extrabold whitespace-pre-line">${r["전공"]}</td>
                     <td>${r["총 경력"]}</td><td>${r["최종회사"]}</td>
-                    <td><select class="border rounded p-1 text-[10px] bg-white"><option>미정</option><option>합격</option></select></td>
+                    <td>
+                        <select class="border rounded p-1 text-[10px] bg-white outline-none ring-1 ring-gray-100">
+                            <option>미정</option><option>합격</option><option>불합격</option>
+                        </select>
+                    </td>
                     <td colspan="4" class="text-gray-300">—</td>
-                </tr>`).join('');
+                </tr>
+            `).join('');
         }
 
+        // 5. 엑셀 다운로드 [cite: 207-228]
         function downloadXLSX() {
+            if (results.length === 0) return alert("저장된 데이터가 없습니다.");
             const ws = XLSX.utils.json_to_sheet(results);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "분석결과");
-            XLSX.writeFile(wb, "EST_FAMILY_분석결과_나이포함.xlsx");
+            XLSX.writeFile(wb, "EST_FAMILY_누적분석데이터.xlsx");
         }
     </script>
 </body>
