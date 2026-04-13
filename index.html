@@ -4,69 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EST FAMILY - 채용 이력서 분석 시스템</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; }
-        .sidebar-active { background: rgba(255,255,255,.12); color: #fff; font-weight: 700; }
-        th, td { border-right: 1px solid #e5e7eb; }
-        th:last-child, td:last-child { border-right: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #f9fafb; margin: 0; }
+        .sidebar-active { background-color: rgba(255,255,255,0.12); color: #ffffff; font-weight: 700; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: center; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect } = React;
 
-        const DEFAULT_PW = "estsoft2024"; [cite: 9, 114]
-        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접진행 여부", "이력서", "JD 적합도", "적합도 평가", "평가 근거"]; [cite: 11]
+        // 상수 설정 [cite: 9, 11]
+        const DEFAULT_PW = "estsoft2024";
+        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접진행 여부", "이력서", "JD 적합도", "적합도 평가", "평가 근거"];
 
         function App() {
-            const [auth, setAuth] = useState(false); // 인증 상태 [cite: 115]
+            const [auth, setAuth] = useState(false);
             const [password, setPassword] = useState("");
             const [activeTab, setActiveTab] = useState("result");
             const [results, setResults] = useState([]);
-            const [files, setFiles] = useState([]);
-            const [processing, setProcessing] = useState(false);
 
-            // 데이터 로드
+            // 데이터 로드 및 저장
             useEffect(() => {
-                const saved = localStorage.getItem('est_resume_final');
+                const saved = localStorage.getItem('est_resume_final_data');
                 if (saved) setResults(JSON.parse(saved));
             }, []);
 
             useEffect(() => {
-                localStorage.setItem('est_resume_final', JSON.stringify(results));
+                localStorage.setItem('est_resume_final_data', JSON.stringify(results));
             }, [results]);
 
-            // 로그인 로직 [cite: 132-136, 153]
             const handleLogin = () => {
                 if (password === DEFAULT_PW) {
                     setAuth(true);
                 } else {
-                    alert("비밀번호가 올바르지 않습니다.");
+                    alert("비밀번호가 틀렸습니다.");
                 }
             };
 
-            // 엑셀 다운로드 
-            const exportToExcel = () => {
-                const ws = XLSX.utils.json_to_sheet(results.map((r, i) => ({
-                    "No.": i + 1,
-                    ...r
-                })));
+            const exportExcel = () => {
+                const ws = XLSX.utils.json_to_sheet(results);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "분석결과");
-                XLSX.writeFile(wb, "이력서_분석결과.xlsx"); [cite: 228]
-            };
+                XLSX.utils.book_append_sheet(wb, ws, "Results");
+                XLSX.writeFile(wb, "이력서_분석결과.xlsx");
+            }; [cite: 224-228]
 
-            // 테스트 데이터 추가 (스크린샷 기준)
-            const addSample = () => {
-                const sample = {
-                    id: Date.now(),
+            const addMockData = () => {
+                const mock = {
+                    "No.": results.length + 1,
                     "이름": "문철민",
                     "생년(만나이)": "미상 (만 나이 미상)",
                     "성별": "남",
@@ -76,116 +69,89 @@
                     "총 경력": "17년 1개월",
                     "최종회사": "도브러너",
                     "면접진행 여부": "미정",
-                    "이력서": "—",
-                    "JD 적합도": "—",
-                    "적합도 평가": "—",
-                    "평가 근거": "—"
+                    "이력서": "—", "JD 적합도": "—", "적합도 평가": "—", "평가 근거": "—"
                 };
-                setResults([sample, ...results]);
+                setResults([mock, ...results]);
             };
 
-            // 인증 전 화면 (비밀번호 입력) [cite: 137-159]
             if (!auth) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                        <div className="bg-white p-10 rounded-xl shadow-xl border w-96 text-center">
-                            <div className="w-12 h-12 bg-blue-600 rounded-xl mx-auto mb-4 flex items-center justify-center text-white font-bold text-xl">EST</div>
-                            <h2 className="text-lg font-bold text-gray-800 mb-1">채용 이력서 분석 시스템</h2> [cite: 142]
-                            <p className="text-xs text-gray-400 mb-8">접근하려면 비밀번호를 입력하세요</p> [cite: 143]
+                    <div className="h-screen flex items-center justify-center bg-gray-100">
+                        <div className="bg-white p-8 rounded-lg shadow-md w-80">
+                            <h2 className="text-xl font-bold mb-4 text-center">EST FAMILY</h2>
                             <input 
                                 type="password" 
-                                className="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 ring-blue-500"
-                                placeholder="비밀번호 입력"
+                                placeholder="비밀번호 입력" 
+                                className="w-full border p-2 rounded mb-4 text-center"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                            /> [cite: 152]
-                            <button onClick={handleLogin} className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">로그인</button> [cite: 153]
+                            />
+                            <button onClick={handleLogin} className="w-full bg-blue-600 text-white p-2 rounded font-bold">로그인</button>
                         </div>
                     </div>
                 );
-            }
+            } [cite: 137-159]
 
-            // 인증 후 메인 화면
             return (
                 <div className="flex min-h-screen">
                     {/* 사이드바 [cite: 83-111] */}
-                    <aside className="w-[220px] bg-[#2d3a82] text-white flex flex-col shrink-0">
-                        <div className="p-5 border-b border-white/10">
+                    <aside className="w-56 bg-[#1e3a8a] text-white flex flex-col shrink-0">
+                        <div className="p-6 border-b border-white/10">
                             <h1 className="text-xl font-black italic">EST FAMILY</h1>
-                            <p className="text-[10px] opacity-40 mt-1">채용 이력서 분석 시스템</p>
                         </div>
-                        <nav className="flex-1 p-3 space-y-1">
-                            <button onClick={() => setActiveTab("upload")} className={`w-full text-left px-4 py-2.5 rounded text-sm transition ${activeTab==='upload'?'sidebar-active':'opacity-60'}`}>📁 업로드 & 설정</button>
-                            <button onClick={() => setActiveTab("result")} className={`w-full text-left px-4 py-2.5 rounded text-sm transition ${activeTab==='result'?'sidebar-active':'opacity-60'}`}>📊 분석 결과</button>
-                            <button className="w-full text-left px-4 py-2.5 rounded text-sm opacity-60">⚙️ 관리자 설정</button>
+                        <nav className="p-4 space-y-2">
+                            <button onClick={() => setActiveTab("upload")} className={`w-full text-left p-2 rounded ${activeTab === 'upload' ? 'sidebar-active' : ''}`}>업로드 & 설정</button>
+                            <button onClick={() => setActiveTab("result")} className={`w-full text-left p-2 rounded ${activeTab === 'result' ? 'sidebar-active' : ''}`}>분석 결과</button>
                         </nav>
                     </aside>
 
-                    <main className="flex-1 flex flex-col overflow-hidden">
-                        <header className="bg-white border-b px-8 py-4 flex justify-between items-center shadow-sm">
-                            <h2 className="font-bold text-gray-800 text-sm">{activeTab === 'upload' ? '업로드 & 설정' : '분석 결과'}</h2>
-                            <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
-                                <span className="w-2 h-2 bg-green-500 rounded-full"></span> 일반 사용자 [cite: 433-435]
+                    <main className="flex-1 bg-[#f9fafb]">
+                        <header className="bg-white border-b p-4 flex justify-between items-center px-8">
+                            <h2 className="font-bold text-gray-700">{activeTab === 'upload' ? '업로드' : '분석 결과'}</h2>
+                            <div className="text-xs font-bold text-green-600 flex items-center gap-1">
+                                <span className="w-2 h-2 bg-green-500 rounded-full"></span> 일반 사용자
                             </div>
                         </header>
 
-                        <div className="p-8 flex-1 overflow-auto">
-                            {activeTab === 'upload' ? (
-                                <div className="max-w-2xl mx-auto space-y-6">
-                                    <div className="bg-white p-6 rounded-lg border text-center cursor-pointer hover:bg-gray-50 transition" onClick={() => addSample()}>
-                                        <p className="text-blue-600 font-bold">여기를 클릭하여 샘플 데이터를 추가해 보세요 (테스트용)</p>
-                                    </div>
+                        <div className="p-8">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-bold">총 {results.length}명 분석 완료</h3>
+                                <div className="space-x-2">
+                                    <button onClick={addMockData} className="bg-white border px-3 py-1.5 rounded text-xs">샘플추가</button>
+                                    <button onClick={exportExcel} className="bg-blue-600 text-white px-4 py-2 rounded text-xs font-bold shadow-sm">⬇ XLSX 다운로드</button>
                                 </div>
-                            ) : (
-                                <>
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="font-bold text-sm text-gray-700">총 {results.length}명 분석 완료</h3>
-                                        <button onClick={exportToExcel} className="bg-[#4a6cf7] text-white px-5 py-2.5 rounded-lg flex items-center gap-2 text-xs font-bold shadow-lg hover:bg-blue-700 transition">
-                                            <span>⬇ XLSX 다운로드</span>
-                                        </button> [cite: 298]
-                                    </div>
+                            </div>
 
-                                    <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
-                                        <table className="w-full text-[11px] text-center border-collapse">
-                                            <thead className="bg-[#f8f9fc] border-b-2">
-                                                <tr className="text-gray-500 font-bold">
-                                                    {COLUMNS.map(col => <th key={col} className="p-3 bg-gray-50">{col}</th>)}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {results.map((r, i) => (
-                                                    <tr key={r.id} className="border-b hover:bg-gray-50 text-gray-700">
-                                                        <td className="p-3 text-gray-400">{results.length - i}</td>
-                                                        <td className="p-3 font-bold text-gray-900 w-20 leading-tight">{r["이름"]}</td>
-                                                        <td className="p-3 w-24 leading-tight">{r["생년(만나이)"]}</td>
-                                                        <td className="p-3">{r["성별"]}</td>
-                                                        <td className="p-3 w-20 leading-tight">{r["최종학력"]}</td>
-                                                        <td className="p-3 w-24 leading-tight">{r["최종학교"]}</td>
-                                                        <td className="p-3 w-32 leading-tight py-4 whitespace-pre-line text-blue-600 font-medium">{r["전공"]}</td>
-                                                        <td className="p-3 w-20 leading-tight">{r["총 경력"]}</td>
-                                                        <td className="p-3 w-24 leading-tight">{r["최종회사"]}</td>
-                                                        <td className="p-3">
-                                                            <select className="border rounded px-1 py-1 text-[10px] outline-none">
-                                                                <option>미정</option> [cite: 329]
-                                                                <option>합격</option>
-                                                                <option>불합격</option>
-                                                            </select>
-                                                        </td>
-                                                        <td className="p-3 text-gray-300">—</td>
-                                                        <td className="p-3 text-gray-300">—</td>
-                                                        <td className="p-3 text-gray-300">—</td>
-                                                        <td className="p-3 text-gray-300">—</td>
-                                                    </tr>
-                                                ))}
-                                                {results.length === 0 && (
-                                                    <tr><td colSpan={COLUMNS.length} className="p-20 text-gray-400 text-sm font-medium text-center bg-white">분석된 데이터가 없습니다.</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </>
-                            )}
+                            <div className="bg-white rounded border overflow-x-auto shadow-sm">
+                                <table className="text-[11px]">
+                                    <thead className="bg-gray-50">
+                                        <tr>{COLUMNS.map(c => <th key={c} className="p-3 text-gray-500">{c}</th>)}</tr>
+                                    </thead>
+                                    <tbody>
+                                        {results.map((r, i) => (
+                                            <tr key={i} className="hover:bg-gray-50 border-b">
+                                                <td className="text-gray-400">{results.length - i}</td>
+                                                <td className="font-bold">{r["이름"]}</td>
+                                                <td>{r["생년(만나이)"]}</td>
+                                                <td>{r["성별"]}</td>
+                                                <td>{r["최종학력"]}</td>
+                                                <td>{r["최종학교"]}</td>
+                                                <td className="text-blue-600 font-medium whitespace-pre-line">{r["전공"]}</td>
+                                                <td>{r["총 경력"]}</td>
+                                                <td>{r["최종회사"]}</td>
+                                                <td>
+                                                    <select className="border rounded p-1"><option>미정</option><option>합격</option></select>
+                                                </td>
+                                                <td className="text-gray-300">—</td>
+                                                <td className="text-gray-300">—</td>
+                                                <td className="text-gray-300">—</td>
+                                                <td className="text-gray-300">—</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </main>
                 </div>
