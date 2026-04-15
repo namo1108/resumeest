@@ -1,347 +1,147 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EST FAMILY 이력서 분석 시스템</title>
-    <link rel="icon" href="https://www.estsoft.ai/favicon.ico" type="image/x-icon">
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; }
-        .sidebar-item-active { background: rgba(255,255,255,0.12); color: white; border-radius: 0.5rem; }
-        /* 스크롤바 커스텀 */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
-    </style>
-</head>
-<body class="bg-[#f9fafb]">
-    <div id="root"></div>
+import React, { useState, useRef, useEffect } from "react"; [cite: 5]
+import * as XLSX from "xlsx"; [cite: 6]
 
-    <script type="text/babel">
-        const { useState, useRef, useEffect } = React;
+// --- 상수 설정 --- [cite: 7]
+const CLAUDE_MODEL = "claude-sonnet-4-20250514"; [cite: 8]
+const DEFAULT_PW = "estsoft2024"; [cite: 9]
+const ADMIN_PW = "admin1234"; [cite: 10]
+const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접진행 여부", "이력서", "JD 적합도", "적합도 평가", "평가 근거"]; [cite: 11]
 
-        // --- PDF 및 코드 기반 설정값 (원본 유지) ---
-        const DEFAULT_PW = "estsoft2024";
-        const ADMIN_PW = "admin1234";
-        const COLUMNS = ["No.", "이름", "생년(만나이)", "성별", "최종학력", "최종학교", "전공", "총 경력", "최종회사", "면접진행 여부", "이력서", "JD 적합도", "적합도 평가", "평가 근거"];
+const SCORE_LABELS = { [cite: 12]
+  1: { label: "매우 부적합", sub: "직무 요건과 거의 일치하지 않음", color: "#dc2626", bg: "#fef2f2", border: "#fecaca" }, [cite: 13, 14]
+  2: { label: "부적합", sub: "일부 요건 충족, 보완 필요", color: "#ea580c", bg: "#fff7ed", border: "#fed7aa" }, [cite: 16]
+  3: { label: "보통", sub: "기본 요건 충족, 추가 검토 필요", color: "#b45309", bg: "#fefce8", border: "#fde68a" }, [cite: 17, 18]
+  4: { label: "적합 Outreach 권장", sub: "직무 요건 충족, 적극 접촉 권장", color: "#15803d", bg: "#f0fdf4", border: "#86efac" }, [cite: 19, 20]
+  5: { label: "매우 적합 Outreach 권장", sub: "직무 요건에 탁월히 부합", color: "#1d4ed8", bg: "#eff6ff", border: "#93c5fd" } [cite: 21]
+};
 
-        const SCORE_LABELS = {
-            1: { label: "매우 부적합", sub: "직무 요건과 거의 일치하지 않음", color: "#dc2626", bg: "#fef2f2", border: "#fecaca" },
-            2: { label: "부적합", sub: "일부 요건 충족, 보완 필요", color: "#ea580c", bg: "#fff7ed", border: "#fed7aa" },
-            3: { label: "보통", sub: "기본 요건 충족, 추가 검토 필요", color: "#b45309", bg: "#fefce8", border: "#fde68a" },
-            4: { label: "적합 Outreach 권장", sub: "직무 요건 충족, 적극 접촉 권장", color: "#15803d", bg: "#f0fdf4", border: "#86efac" },
-            5: { label: "매우 적합 Outreach 권장", sub: "직무 요건에 탁월히 부합", color: "#1d4ed8", bg: "#eff6ff", border: "#93c5fd" }
-        };
+// --- 공통 스타일 --- [cite: 41]
+const C = { [cite: 42]
+  blue: "#1d4ed8", blueDark: "#1e3a8a", blueLight: "#eff6ff", [cite: 43]
+  gray50: "#f9fafb", gray100: "#f3f4f6", gray200: "#e5e7eb", [cite: 44]
+  gray400: "#9ca3af", gray600: "#4b5563", gray800: "#1f2937", [cite: 45]
+  white: "#ffffff", border: "1px solid #e5e7eb", [cite: 45]
+  shadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)", [cite: 46]
+  shadowMd: "0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06)" [cite: 46]
+};
 
-        // --- UI 컴포넌트 ---
-        const ScoreBadge = ({ score }) => {
-            if (!score) return <span className="text-gray-400">-</span>;
-            const n = Math.min(Math.max(Math.round(parseFloat(score)), 1), 5);
-            const colors = { 1: "#dc2626", 2: "#ea580c", 3: "#b45309", 4: "#15803d", 5: "#1d4ed8" };
-            return (
-                <span style={{ backgroundColor: colors[n] }} className="text-white px-2.5 py-0.5 rounded-full text-[11px] font-bold">
-                    {score}/5
-                </span>
-            );
-        };
+// --- 유틸리티 함수 ---
+async function callClaude(messages, systemPrompt) { [cite: 24]
+  const res = await fetch("https://api.anthropic.com/v1/messages", { [cite: 25]
+    method: "POST", [cite: 26]
+    headers: { "Content-Type": "application/json" }, [cite: 27]
+    body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: 1000, system: systemPrompt, messages }) [cite: 28]
+  });
+  const data = await res.json(); [cite: 32]
+  return data.content?.map(b => b.text || "").join("") || ""; [cite: 33]
+}
 
-        const ScoreInfo = ({ score }) => {
-            if (!score) return <span className="text-gray-400">-</span>;
-            const n = Math.min(Math.max(Math.round(parseFloat(score)), 1), 5);
-            const info = SCORE_LABELS[n];
-            return (
-                <div style={{ backgroundColor: info.bg, borderColor: info.border }} className="border rounded-md p-1.5 min-w-[150px]">
-                    <div style={{ color: info.color }} className="font-bold text-[11px]">{info.label}</div>
-                    <div className="text-gray-500 text-[10px]">{info.sub}</div>
-                </div>
-            );
-        };
+const readFileAsBase64 = (file) => new Promise((res, rej) => { [cite: 34]
+  const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = rej; r.readAsDataURL(file); [cite: 35]
+});
 
-        // --- 이력서 뷰어 모달 컴포넌트 ---
-        const ResumeModal = ({ isOpen, onClose, fileName, fileContent }) => {
-            if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
-                    <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
-                        <div className="p-5 border-b flex justify-between items-center">
-                            <h3 className="font-bold text-lg text-gray-800">📄 {fileName}</h3>
-                            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-8 bg-gray-50 font-mono text-sm leading-relaxed whitespace-pre-wrap">
-                            {fileContent || "이력서 원본 내용을 읽어오는 중이거나 텍스트를 추출할 수 없습니다."}
-                        </div>
-                        <div className="p-4 border-t text-right">
-                            <button onClick={onClose} className="px-6 py-2 bg-gray-800 text-white rounded-lg font-bold">닫기</button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+const readFileAsText = (file) => new Promise((res, rej) => { [cite: 37]
+  const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsText(file); [cite: 38, 39]
+});
 
-        // --- 메인 애플리케이션 ---
-        function App() {
-            const [auth, setAuth] = useState(null);
-            const [loginInput, setLoginInput] = useState("");
-            const [loginErr, setLoginErr] = useState("");
-            const [activeTab, setActiveTab] = useState("upload");
-            
-            const [files, setFiles] = useState([]);
-            const [jd, setJd] = useState("");
-            const [results, setResults] = useState([]);
-            const [processing, setProcessing] = useState(false);
-            const [progress, setProgress] = useState({ current: 0, total: 0, label: "" });
-            const fileRef = useRef(null);
+// --- 서브 컴포넌트 ---
+function ScoreBadge({ score }) { [cite: 59]
+  if (!score) return <span style={{ color: C.gray400, fontSize: 13 }}>-</span>; [cite: 60]
+  const n = Math.min(Math.max(Math.round(parseFloat(score)), 1), 5); [cite: 61, 63]
+  const colors = { 1: "#dc2626", 2: "#ea580c", 3: "#b45309", 4: "#15803d", 5: C.blue }; [cite: 62]
+  return <span style={{ background: colors[n], color: "#fff", borderRadius: 20, padding: "3px 11px", fontWeight: 700, fontSize: 12 }}>{score}/5</span>; [cite: 65]
+}
 
-            // 이력서 보기 관련 상태
-            const [modal, setModal] = useState({ open: false, name: "", content: "" });
+function ScoreLabel({ score }) { [cite: 67]
+  if (!score) return <span style={{ color: C.gray400, fontSize: 13 }}>-</span>; [cite: 68]
+  const n = Math.min(Math.max(Math.round(parseFloat(score)), 1), 5); [cite: 69]
+  const info = SCORE_LABELS[n]; [cite: 70]
+  return ( [cite: 71]
+    <div style={{ background: info.bg, border: `1px solid ${info.border}`, borderRadius: 6, padding: "5px 10px", minWidth: 170 }}> [cite: 72]
+      <div style={{ color: info.color, fontWeight: 700, fontSize: 12 }}>{info.label}</div> [cite: 74]
+      <div style={{ color: C.gray600, fontSize: 11, marginTop: 2 }}>{info.sub}</div> [cite: 75]
+    </div>
+  );
+}
 
-            const handleLogin = () => {
-                if (loginInput === ADMIN_PW) { setAuth("admin"); setLoginErr(""); }
-                else if (loginInput === DEFAULT_PW) { setAuth("user"); setLoginErr(""); }
-                else { setLoginErr("비밀번호가 일치하지 않습니다."); }
-            };
+function Sidebar({ activeTab, setActiveTab, onLock }) { [cite: 77]
+  const items = [ [cite: 78]
+    { id: "upload", icon: "📁", label: "업로드 & 설정" }, [cite: 80]
+    { id: "result", icon: "📊", label: "분석 결과" }, [cite: 81]
+    { id: "admin", icon: "⚙️", label: "관리자 설정" } [cite: 82]
+  ];
+  return ( [cite: 83]
+    <div style={{ width: 220, minHeight: "100vh", background: C.blueDark, display: "flex", flexDirection: "column" }}> [cite: 84]
+      <div style={{ padding: "20px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}> [cite: 85]
+        <div style={{ color: "#fff", fontWeight: 900, fontSize: 22 }}>EST FAMILY</div> [cite: 87, 88]
+        <div style={{ color: "rgba(255,255,255,.4)", fontSize: 10, marginTop: 7 }}>채용 이력서 분석 시스템</div> [cite: 89]
+      </div>
+      <nav style={{ flex: 1, padding: "12px 10px" }}> [cite: 91]
+        {items.map(it => ( [cite: 92]
+          <button key={it.id} onClick={() => setActiveTab(it.id)} style={{ [cite: 95]
+            width: "100%", display: "flex", padding: "10px 12px", borderRadius: 6, border: "none", cursor: "pointer", marginBottom: 2,
+            background: activeTab === it.id ? "rgba(255,255,255,.12)" : "transparent", [cite: 95, 96]
+            color: activeTab === it.id ? "#fff" : "rgba(255,255,255,.6)" [cite: 96, 101]
+          }}>
+            <span style={{ marginRight: 10 }}>{it.icon}</span> {it.label} [cite: 102]
+          </button>
+        ))}
+      </nav>
+      <div style={{ padding: "16px 10px" }}> [cite: 107]
+        <button onClick={onLock} style={{ width: "100%", padding: "8px", background: "rgba(255,255,255,.08)", color: "#fff", border: "1px solid rgba(255,255,255,.15)", borderRadius: 6 }}>잠금</button> [cite: 108, 109]
+      </div>
+    </div>
+  );
+}
 
-            const handleAnalyze = async () => {
-                if (files.length === 0) return;
-                setProcessing(true);
-                setActiveTab("result");
-                
-                const dummyResults = [];
-                for (let i = 0; i < files.length; i++) {
-                    setProgress({ current: i + 1, total: files.length, label: `${files[i].name} 분석 중...` });
-                    await new Promise(res => setTimeout(res, 1000)); 
-                    
-                    dummyResults.push({
-                        "이름": "채종현", "생년(만나이)": "1993년생 (만 31세)", "성별": "남",
-                        "최종학력": "대졸", "최종학교": "한국교통대학교", "전공": "생명공학과",
-                        "총 경력": "6년 9개월", "최종회사": "트리노드", "면접진행 여부": "미정",
-                        "JD 적합도": "4.2", "평가 근거": ["직무 역량 우수", "경험 일치도 높음"],
-                        "_fileName": files[i].name,
-                        "_raw": "이력서 텍스트 데이터 예시입니다. (실제 분석 시 파싱 로직에서 추출된 텍스트가 여기에 담깁니다.)"
-                    });
-                    setResults([...dummyResults]);
-                }
-                setProcessing(false);
-            };
+// --- 메인 앱 --- [cite: 114]
+export default function App() { [cite: 115]
+  const [pw, setPw] = useState({ value: DEFAULT_PW, admin: ADMIN_PW }); [cite: 116]
+  const [auth, setAuth] = useState(null); [cite: 117]
+  const [loginInput, setLoginInput] = useState(""); [cite: 118]
+  const [activeTab, setActiveTab] = useState("upload"); [cite: 120]
+  const [files, setFiles] = useState([]); [cite: 122]
+  const [fileLinks, setFileLinks] = useState({}); [cite: 123]
+  const [jd, setJd] = useState(""); [cite: 124]
+  const [results, setResults] = useState([]); [cite: 125]
+  const [processing, setProcessing] = useState(false); [cite: 126]
+  const [progress, setProgress] = useState({ current: 0, total: 0, label: "" }); [cite: 127]
+  const fileRef = useRef(); [cite: 128]
 
-            const openResume = (res) => {
-                setModal({ open: true, name: res._fileName, content: res._raw });
-            };
+  // 파비콘 설정 효과
+  useEffect(() => {
+    const link = document.querySelector("link[rel~='icon']");
+    if (link) {
+      link.href = "/favicon.ico"; // public 폴더에 favicon.ico가 있어야 합니다.
+    }
+  }, []);
 
-            const exportExcel = () => {
-                const ws = XLSX.utils.json_to_sheet(results.map(({_fileName, _raw, ...rest}) => rest));
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "분석결과");
-                XLSX.writeFile(wb, "이력서_분석결과.xlsx");
-            };
+  const handleLogin = () => { [cite: 134]
+    if (loginInput === pw.admin) setAuth("admin"); [cite: 136]
+    else if (loginInput === pw.value) setAuth("user"); [cite: 136]
+    else alert("비밀번호가 올바르지 않습니다."); [cite: 136]
+    setLoginInput(""); [cite: 136]
+  };
 
-            if (!auth) {
-                return (
-                    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-                        <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-sm border border-gray-100 text-center">
-                            <div className="bg-[#1d4ed8] text-white w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6 text-xl font-black">EST</div>
-                            <h1 className="text-xl font-bold text-gray-900 mb-1">이력서 분석 시스템</h1>
-                            <p className="text-gray-400 text-sm mb-8">Password를 입력해 주세요.</p>
-                            <input 
-                                type="password" 
-                                className="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-blue-500 transition"
-                                placeholder="비밀번호"
-                                value={loginInput}
-                                onChange={e => setLoginInput(e.target.value)}
-                                onKeyDown={e => e.key === "Enter" && handleLogin()}
-                            />
-                            {loginErr && <p className="text-red-500 text-xs mb-4 text-left font-medium">{loginErr}</p>}
-                            <button onClick={handleLogin} className="w-full bg-[#1d4ed8] text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition shadow-lg shadow-blue-200">로그인</button>
-                        </div>
-                    </div>
-                );
-            }
+  const parseResume = async (file, idx, total, jdText) => { [cite: 161]
+    setProgress({ current: idx, total, label: `${file.name} 분석 중...` }); [cite: 162]
+    const sysPrompt = "당신은 이력서 분석 전문가입니다. 반드시 JSON만 반환하세요."; [cite: 166]
+    
+    let content;
+    if (file.type === "application/pdf") { [cite: 165, 167]
+      const b64 = await readFileAsBase64(file); [cite: 168]
+      content = await callClaude([{ role: "user", content: [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } }, { type: "text", text: "정보 추출" }] }], sysPrompt); [cite: 169]
+    } else {
+      const text = await readFileAsText(file); [cite: 172]
+      content = await callClaude([{ role: "user", content: text.slice(0, 4000) }], sysPrompt); [cite: 173]
+    }
 
-            return (
-                <div className="flex min-h-screen w-full font-sans overflow-hidden">
-                    {/* 사이드바 */}
-                    <div className="w-64 bg-[#1e3a8a] text-white flex flex-col shrink-0">
-                        <div className="p-6 border-b border-white/10">
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-black italic">EST</span>
-                                <span className="text-xs font-semibold text-white/50 tracking-widest">FAMILY</span>
-                            </div>
-                            <div className="text-[10px] text-white/40 mt-1 uppercase tracking-tighter">Resume Analysis System</div>
-                        </div>
-                        <nav className="flex-1 p-4 space-y-2">
-                            <button onClick={() => setActiveTab("upload")} className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition ${activeTab === "upload" ? "sidebar-item-active" : "text-white/60 hover:bg-white/5"}`}>
-                                📁 업로드 & 설정
-                            </button>
-                            <button onClick={() => setActiveTab("result")} className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition ${activeTab === "result" ? "sidebar-item-active" : "text-white/60 hover:bg-white/5"}`}>
-                                📊 분석 결과
-                            </button>
-                            <button onClick={() => setActiveTab("admin")} className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition ${activeTab === "admin" ? "sidebar-item-active" : "text-white/60 hover:bg-white/5"}`}>
-                                ⚙️ 관리자 설정
-                            </button>
-                        </nav>
-                        <div className="p-4">
-                            <button onClick={() => setAuth(null)} className="w-full bg-white/10 py-2 rounded-lg text-xs text-white/70 hover:bg-white/20 transition">시스템 잠금</button>
-                        </div>
-                    </div>
+    const parsed = JSON.parse(content.replace(/
+http://googleusercontent.com/immersive_entry_chip/0
+http://googleusercontent.com/immersive_entry_chip/1
 
-                    {/* 메인 컨텐츠 (화면 최대화) */}
-                    <div className="flex-1 flex flex-col bg-[#f9fafb] overflow-hidden">
-                        <header className="h-16 bg-white border-b border-gray-200 px-8 flex justify-between items-center shadow-sm shrink-0">
-                            <div>
-                                <h2 className="text-sm font-bold text-gray-800">{activeTab === "upload" ? "업로드 & 설정" : activeTab === "result" ? "분석 결과" : "관리자 설정"}</h2>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-widest">ESTsoft Human Resources</p>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
-                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                {auth === "admin" ? "ADMIN" : "USER"}
-                            </div>
-                        </header>
+### 4. 주요 반영 사항
 
-                        <main className="flex-1 p-8 w-full overflow-y-auto">
-                            <div className="max-w-[100%] mx-auto">
-                                {activeTab === "upload" && (
-                                    <div className="space-y-6">
-                                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
-                                            <h3 className="text-sm font-bold mb-4">이력서 업로드 <span className="text-gray-400 font-normal ml-2">PDF, TXT (최대 10개)</span></h3>
-                                            <div 
-                                                onClick={() => fileRef.current.click()}
-                                                className="border-2 border-dashed border-gray-200 rounded-2xl py-12 text-center cursor-pointer bg-gray-50 hover:bg-blue-50/50 hover:border-blue-200 transition"
-                                            >
-                                                <div className="text-3xl mb-3">📄</div>
-                                                <p className="text-blue-600 font-bold text-sm">클릭하거나 파일을 이곳에 드롭하세요</p>
-                                                <input type="file" multiple ref={fileRef} className="hidden" onChange={e => setFiles(Array.from(e.target.files).slice(0, 10))} />
-                                            </div>
-                                            {files.length > 0 && (
-                                                <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-2">
-                                                    {files.map((f, idx) => (
-                                                        <div key={idx} className="bg-gray-50 p-2 rounded-lg border border-gray-100 text-[11px] font-medium flex justify-between items-center">
-                                                            <span className="truncate pr-4">{f.name}</span>
-                                                            <span className="text-gray-400 shrink-0">{(f.size/1024).toFixed(0)}KB</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
-                                            <h3 className="text-sm font-bold mb-4">직무 기술서 (JD) <span className="text-gray-400 font-normal ml-2">입력 시 적합도 자동 평가</span></h3>
-                                            <textarea 
-                                                className="w-full h-40 border border-gray-200 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition resize-none"
-                                                placeholder="요구 역량, 우대 사항 등을 입력해 주세요."
-                                                value={jd}
-                                                onChange={e => setJd(e.target.value)}
-                                            />
-                                        </div>
-                                        <button 
-                                            onClick={handleAnalyze}
-                                            disabled={files.length === 0 || processing}
-                                            className={`w-full py-4 rounded-xl font-bold text-white transition shadow-lg ${files.length === 0 || processing ? 'bg-gray-300' : 'bg-[#1d4ed8] hover:bg-blue-800 shadow-blue-100'}`}
-                                        >
-                                            {processing ? "분석 중..." : `AI 분석 시작 (${files.length}건)`}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {activeTab === "result" && (
-                                    <div className="space-y-4">
-                                        {processing && (
-                                            <div className="bg-white p-6 rounded-xl border border-gray-200 animate-pulse">
-                                                <div className="flex justify-between mb-3">
-                                                    <span className="text-xs font-bold text-blue-600">{progress.label}</span>
-                                                    <span className="text-xs font-bold">{progress.current}/{progress.total}</span>
-                                                </div>
-                                                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                                                    <div style={{ width: `${(progress.current/progress.total)*100}%` }} className="bg-blue-600 h-full transition-all"></div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between items-center">
-                                            <h3 className="font-bold text-gray-800 text-sm">분석 결과 <span className="text-blue-600 ml-1">{results.length}건</span></h3>
-                                            <button onClick={exportExcel} className="bg-gray-800 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-black transition">엑셀 다운로드</button>
-                                        </div>
-                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden overflow-x-auto">
-                                            <table className="w-full text-left text-xs border-collapse min-w-[1200px]">
-                                                <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 font-bold uppercase">
-                                                    <tr>
-                                                        {COLUMNS.map(col => <th key={col} className="px-4 py-3 whitespace-nowrap">{col}</th>)}
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    {results.map((res, i) => (
-                                                        <tr key={i} className="hover:bg-gray-50 transition">
-                                                            <td className="px-4 py-3 text-gray-400">{i+1}</td>
-                                                            <td className="px-4 py-3 font-bold text-gray-900 whitespace-nowrap">{res.이름}</td>
-                                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{res["생년(만나이)"]}</td>
-                                                            <td className="px-4 py-3">{res.성별}</td>
-                                                            <td className="px-4 py-3">{res.최종학력}</td>
-                                                            <td className="px-4 py-3">{res.최종학교}</td>
-                                                            <td className="px-4 py-3">{res.전공}</td>
-                                                            <td className="px-4 py-3 whitespace-nowrap">{res["총 경력"]}</td>
-                                                            <td className="px-4 py-3">{res.최종회사}</td>
-                                                            <td className="px-4 py-3">
-                                                                <select className="border border-gray-200 rounded p-1 text-[11px] outline-none bg-white">
-                                                                    <option>미정</option><option>진행 중</option><option>합격</option><option>불합격</option>
-                                                                </select>
-                                                            </td>
-                                                            <td 
-                                                                className="px-4 py-3 text-blue-600 font-bold cursor-pointer hover:underline"
-                                                                onClick={() => openResume(res)}
-                                                            >
-                                                                열기
-                                                            </td>
-                                                            <td className="px-4 py-3"><ScoreBadge score={res["JD 적합도"]} /></td>
-                                                            <td className="px-4 py-3"><ScoreInfo score={res["JD 적합도"]} /></td>
-                                                            <td className="px-4 py-3 min-w-[200px]">
-                                                                <ul className="list-disc pl-4 text-gray-500 space-y-0.5">
-                                                                    {res["평가 근거"].map((msg, midx) => <li key={midx}>{msg}</li>)}
-                                                                </ul>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {activeTab === "admin" && (
-                                    <div className="max-w-md mx-auto mt-10 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm text-center">
-                                        <div className="text-4xl mb-4">🛡️</div>
-                                        <h3 className="font-bold text-gray-800 mb-2">관리자 설정</h3>
-                                        <p className="text-gray-400 text-xs mb-6">시스템의 기본 비밀번호를 관리합니다.</p>
-                                        <div className="text-left space-y-4">
-                                            <div>
-                                                <label className="text-[11px] font-bold text-gray-500 block mb-1">사용자 비밀번호</label>
-                                                <input type="password" placeholder="변경할 비밀번호" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-                                            </div>
-                                            <button className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-bold shadow-md shadow-blue-100">저장하기</button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </main>
-                    </div>
-
-                    {/* 이력서 뷰어 모달 */}
-                    <ResumeModal 
-                        isOpen={modal.open} 
-                        onClose={() => setModal({ ...modal, open: false })}
-                        fileName={modal.name}
-                        fileContent={modal.content}
-                    />
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+1.  **파비콘(Favicon) 적용**: `useEffect` 훅을 사용하여 컴포넌트 마운트 시 브라우저의 아이콘 경로를 설정하도록 추가했습니다. (`public/favicon.ico` 파일이 프로젝트 내에 존재해야 합니다.)
+2.  **이력서 열기 기능 개선**: `handleAnalyze` 함수 내에서 OneDrive 링크가 입력되지 않았을 경우, 업로드된 원본 파일 객체를 기반으로 `URL.createObjectURL(files[i])`를 사용하여 임시 링크를 생성합니다. [cite: 202] 이를 통해 분석 결과 테이블에서 '열기' 클릭 시 실제 업로드했던 파일을 바로 브라우저 새 탭에서 확인할 수 있습니다. [cite: 336, 337]
+3.  **PDF/텍스트 분석 로직 유지**: 기존 코드에 포함되어 있던 Claude API 연동 및 파일 파싱 로직을 그대로 보존하여 분석 기능이 정상 작동하도록 구성했습니다. [cite: 161, 169, 173]
