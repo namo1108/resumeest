@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EST FAMILY | Universal Resume Intelligence</title>
+    <title>EST FAMILY | Intelligent Resume Parser</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -11,7 +11,7 @@
         
         body { 
             font-family: 'Pretendard', sans-serif; 
-            background-color: #f8fafc; 
+            background-color: #f1f5f9; 
             color: #1e293b;
             letter-spacing: -0.025em;
         }
@@ -22,24 +22,26 @@
 
         .excel-table { width: 100%; border-collapse: separate; border-spacing: 0; }
         .excel-table th { 
-            background: #f1f5f9; 
-            color: #64748b; 
-            font-weight: 700; 
-            font-size: 12px; 
-            padding: 12px 16px; 
-            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc; 
+            color: #475569; 
+            font-weight: 800; 
+            font-size: 11px; 
+            padding: 14px 16px; 
+            border-bottom: 2px solid #e2e8f0;
             text-align: left;
             position: sticky;
             top: 0;
             z-index: 10;
+            text-transform: uppercase;
         }
         .excel-table td { 
-            padding: 14px 16px; 
-            border-bottom: 1px solid #f1f5f9; 
+            padding: 16px; 
+            border-bottom: 1px solid #e2e8f0; 
             font-size: 13px;
             transition: all 0.2s;
+            background: white;
         }
-        .excel-table tr:hover td { background-color: #f8fafc; cursor: pointer; }
+        .excel-table tr:hover td { background-color: #f1f5f9; cursor: pointer; }
 
         .details-panel {
             transform: translateX(100%);
@@ -47,17 +49,21 @@
         }
         .details-panel.open { transform: translateX(0); }
 
-        .score-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .score-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 12px;
+        }
 
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            accent-color: #4f46e5;
+        .shimmer {
+            background: linear-gradient(90deg, #eff6ff 0%, #dbeafe 50%, #eff6ff 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
     </style>
 </head>
@@ -66,128 +72,142 @@
     <div class="flex h-screen w-full">
         <!-- Sidebar -->
         <aside class="sidebar-gradient w-64 flex flex-col shrink-0 z-30">
-            <div class="p-6">
+            <div class="p-8">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-indigo-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                        <i class="fas fa-microchip text-white text-lg"></i>
+                    <div class="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/40">
+                        <i class="fas fa-brain text-white text-xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-white text-lg font-black leading-tight">EST FAMILY</h1>
-                        <p class="text-indigo-300/50 text-[9px] font-bold uppercase tracking-widest leading-none">AI Resume Analyzer</p>
+                        <h1 class="text-white text-xl font-black leading-tight tracking-tighter">EST FAMILY</h1>
+                        <p class="text-indigo-400 text-[10px] font-bold uppercase tracking-widest opacity-80">AI Extraction v2.5</p>
                     </div>
                 </div>
             </div>
 
-            <nav class="flex-1 px-3 py-4 space-y-1">
-                <button onclick="switchTab('upload')" id="btn-upload" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-400 hover:text-white hover:bg-white/5">
-                    <i class="fas fa-plus-circle"></i>
-                    <span class="font-bold text-sm">분석 및 설정</span>
+            <nav class="flex-1 px-4 space-y-2 mt-4">
+                <button onclick="switchTab('upload')" id="btn-upload" class="tab-btn w-full flex items-center gap-3 px-5 py-3.5 rounded-xl transition-all text-slate-400 hover:text-white hover:bg-white/5">
+                    <i class="fas fa-cloud-arrow-up w-5"></i>
+                    <span class="font-bold text-[14px]">분석 엔진 설정</span>
                 </button>
-                <button onclick="switchTab('results')" id="btn-results" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-900/20">
-                    <i class="fas fa-table-list"></i>
-                    <span class="font-bold text-sm">결과 데이터베이스</span>
+                <button onclick="switchTab('results')" id="btn-results" class="tab-btn w-full flex items-center gap-3 px-5 py-3.5 rounded-xl transition-all bg-indigo-600 text-white shadow-xl shadow-indigo-900/40">
+                    <i class="fas fa-database w-5"></i>
+                    <span class="font-bold text-[14px]">분석 결과 리포트</span>
                 </button>
             </nav>
 
-            <div class="m-4 p-5 bg-white/5 border border-white/10 rounded-2xl">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-shield-halved text-green-400 text-[10px]"></i>
-                    <span class="text-white/60 text-[10px] font-bold uppercase">Universal Engine</span>
+            <div class="m-6 p-5 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
+                <h4 class="text-indigo-300 text-[10px] font-black uppercase mb-2">System Status</h4>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="text-white/80 text-xs font-bold">OCR & NLP Active</span>
                 </div>
-                <p class="text-white/30 text-[9px] leading-relaxed">모든 직무의 JD를 분석하여<br>최적의 후보자를 선별합니다.</p>
             </div>
         </aside>
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-            <header class="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-20">
-                <div class="flex items-center gap-4">
-                    <h2 id="page-title" class="text-base font-bold text-slate-800">결과 데이터베이스</h2>
-                    <div class="h-4 w-[1px] bg-slate-200"></div>
-                    <p class="text-[11px] text-slate-400 font-medium">총 <span id="result-count" class="text-indigo-600 font-bold">0</span>명의 분석 결과</p>
+            <header class="h-20 bg-white border-b border-slate-200 px-10 flex items-center justify-between z-20">
+                <div class="flex flex-col">
+                    <h2 id="page-title" class="text-lg font-black text-slate-800">분석 결과 리포트</h2>
+                    <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wide">Candidate Intelligence Database</p>
                 </div>
-                <div class="flex items-center gap-3">
-                    <div id="loading-spinner" class="hidden flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
-                        <i class="fas fa-spinner fa-spin text-xs"></i>
-                        <span class="font-bold text-[10px]">AI가 이력서를 정밀 분석 중입니다...</span>
+                <div class="flex items-center gap-4">
+                    <div id="loading-spinner" class="hidden flex items-center gap-3 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100 shadow-sm">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                        <span class="font-extrabold text-xs">AI 데이터 파싱 및 검증 중...</span>
                     </div>
-                    <button id="delete-btn" onclick="deleteSelected()" class="hidden bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-100 transition-all border border-red-100">
-                        <i class="fas fa-trash-alt mr-1.5"></i> 선택 삭제 (<span id="selected-count">0</span>)
-                    </button>
-                    <button class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-bold text-xs hover:bg-slate-200 transition-all">
-                        <i class="fas fa-download mr-1.5"></i> 엑셀 저장
+                    <button id="delete-btn" onclick="deleteSelected()" class="hidden bg-red-50 text-red-600 px-5 py-2.5 rounded-xl font-black text-xs hover:bg-red-100 transition-all border border-red-100">
+                        선택 삭제 (<span id="selected-count">0</span>)
                     </button>
                 </div>
             </header>
 
             <!-- Tab: Upload -->
-            <div id="tab-upload" class="tab-content hidden h-full overflow-y-auto p-8 bg-slate-50">
-                <div class="max-w-4xl mx-auto space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                            <h4 class="text-xs font-black text-slate-400 uppercase mb-4 flex items-center gap-2">
-                                <i class="fas fa-clipboard-list text-indigo-500"></i> 직무 기술서(JD) 입력
-                            </h4>
-                            <textarea id="jd-text" class="w-full h-64 p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm" placeholder="여기에 채용하려는 직무의 상세 내용(필수역량, 우대사항 등)을 입력하세요. AI가 이 내용을 바탕으로 이력서를 채점합니다."></textarea>
-                        </div>
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-                            <h4 class="text-xs font-black text-slate-400 uppercase mb-4 flex items-center gap-2">
-                                <i class="fas fa-file-arrow-up text-indigo-500"></i> 후보자 이력서 업로드
-                            </h4>
-                            <div onclick="document.getElementById('file-input').click()" class="flex-1 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all group p-4 text-center">
-                                <i class="fas fa-cloud-upload-alt text-3xl text-slate-300 group-hover:text-indigo-500 mb-3"></i>
-                                <span class="text-xs font-bold text-slate-500">파일을 클릭하거나 드래그하세요</span>
-                                <p class="text-[10px] text-slate-400 mt-1">PDF, 이미지 파일(JPG, PNG) 지원</p>
+            <div id="tab-upload" class="tab-content hidden h-full overflow-y-auto p-10 bg-slate-50">
+                <div class="max-w-5xl mx-auto space-y-8">
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                        <label class="block text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">Job Description (JD) - 이 내용을 기준으로 파싱합니다</label>
+                        <textarea id="jd-text" class="w-full h-48 p-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm leading-relaxed" placeholder="채용 공고의 상세 내용을 입력하세요. AI가 이 기준에 맞춰 후보자의 역량을 매칭합니다."></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
+                            <label class="block text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">Resume Upload</label>
+                            <div onclick="document.getElementById('file-input').click()" class="flex-1 border-4 border-dashed border-slate-100 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group p-8">
+                                <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-indigo-500 transition-all">
+                                    <i class="fas fa-file-invoice text-2xl text-slate-400 group-hover:text-white"></i>
+                                </div>
+                                <span class="text-sm font-black text-slate-600">이력서 파일을 업로드하세요</span>
+                                <p class="text-[11px] text-slate-400 mt-2 font-medium">PDF 또는 이미지 파일을 드래그 앤 드롭</p>
                                 <input type="file" id="file-input" class="hidden" multiple onchange="handleFiles(event)">
                             </div>
-                            <div class="mt-4 bg-slate-50 rounded-lg p-3 max-h-24 overflow-y-auto">
-                                <div id="queue-list" class="space-y-1 text-[11px] text-slate-400 italic">선택된 파일 없음</div>
+                        </div>
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                            <label class="block text-xs font-black text-slate-400 uppercase mb-4 tracking-widest">Processing Queue</label>
+                            <div id="queue-container" class="space-y-3 max-h-[220px] overflow-y-auto pr-2">
+                                <div id="queue-empty" class="text-center py-12">
+                                    <i class="fas fa-layer-group text-slate-200 text-3xl mb-3"></i>
+                                    <p class="text-xs text-slate-400 font-bold">대기 중인 파일이 없습니다.</p>
+                                </div>
+                                <div id="queue-list" class="space-y-2"></div>
                             </div>
                         </div>
                     </div>
-                    <button id="run-btn" onclick="processAnalysis()" class="w-full py-4 bg-slate-900 text-white rounded-xl font-bold text-base hover:bg-black shadow-xl transition-all active:scale-[0.98]">
-                        분석 시작하기
+
+                    <button onclick="processAnalysis()" class="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        AI 정밀 분석 실행
                     </button>
                 </div>
             </div>
 
             <!-- Tab: Results -->
             <div id="tab-results" class="tab-content h-full overflow-hidden flex flex-col">
-                <div class="flex-1 overflow-auto bg-white">
+                <div class="flex-1 overflow-auto">
                     <table class="excel-table">
                         <thead>
                             <tr>
-                                <th class="w-12"><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)"></th>
-                                <th class="w-12">#</th>
-                                <th class="w-32">성명</th>
-                                <th class="w-40">최종 학교 / 전공</th>
-                                <th class="w-40">총 경력</th>
-                                <th class="w-48">주요 경력사항</th>
-                                <th class="w-32">JD 적합도</th>
-                                <th class="w-24">원본</th>
-                                <th>AI 한 줄 평</th>
+                                <th class="w-14 text-center"><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)" class="w-4 h-4 rounded accent-indigo-600"></th>
+                                <th class="w-40">후보자 성명</th>
+                                <th class="w-56">최종 학력 / 전공</th>
+                                <th class="w-32 text-center">총 경력</th>
+                                <th class="w-64">주요 이력</th>
+                                <th class="w-32 text-center">JD 적합도</th>
+                                <th class="w-24 text-center">파일</th>
+                                <th>분석 요약 (AI)</th>
                             </tr>
                         </thead>
                         <tbody id="result-tbody">
                             <tr id="empty-row">
-                                <td colspan="9" class="text-center py-32 text-slate-300 font-medium">분석 결과가 없습니다. '분석 및 설정' 탭에서 시작하세요.</td>
+                                <td colspan="8" class="text-center py-40">
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                            <i class="fas fa-folder-open text-slate-200 text-3xl"></i>
+                                        </div>
+                                        <p class="text-slate-400 font-black text-sm uppercase tracking-widest">분석된 데이터가 없습니다</p>
+                                        <p class="text-slate-300 text-xs mt-1 font-medium">상단 탭에서 분석을 시작해 주세요.</p>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Slide-over -->
-            <div id="details-panel" class="details-panel absolute top-0 right-0 w-[480px] h-full bg-white shadow-2xl z-40 border-l border-slate-200 flex flex-col">
-                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                    <h3 class="font-black text-slate-800">후보자 정밀 진단 결과</h3>
-                    <button onclick="closeDetails()" class="w-8 h-8 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-400 transition-all">
-                        <i class="fas fa-times"></i>
+            <!-- Detail Slide Panel -->
+            <div id="details-panel" class="details-panel absolute top-0 right-0 w-[520px] h-full bg-white shadow-2xl z-50 border-l border-slate-200 flex flex-col">
+                <div class="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <div>
+                        <h3 class="font-black text-slate-800 text-xl tracking-tight">CANDIDATE DOSSIER</h3>
+                        <p class="text-[10px] text-indigo-500 font-black uppercase tracking-widest">AI Matching Intelligence</p>
+                    </div>
+                    <button onclick="closeDetails()" class="w-10 h-10 rounded-xl hover:bg-slate-200 flex items-center justify-center text-slate-400 transition-all">
+                        <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
-                <div class="flex-1 overflow-y-auto p-8" id="details-content"></div>
+                <div class="flex-1 overflow-y-auto p-10" id="details-content"></div>
             </div>
-            <div id="backdrop" onclick="closeDetails()" class="hidden absolute inset-0 bg-slate-900/20 backdrop-blur-[2px] z-35"></div>
+            <div id="backdrop" onclick="closeDetails()" class="hidden absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-40"></div>
         </main>
     </div>
 
@@ -200,31 +220,52 @@
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.remove('bg-indigo-600', 'text-white', 'shadow-lg');
+                b.classList.remove('bg-indigo-600', 'text-white', 'shadow-xl');
                 b.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-white/5');
             });
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            document.getElementById(`btn-${tabId}`).classList.add('bg-indigo-600', 'text-white', 'shadow-lg');
+            document.getElementById(`btn-${tabId}`).classList.add('bg-indigo-600', 'text-white', 'shadow-xl');
             document.getElementById(`btn-${tabId}`).classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-white/5');
-            document.getElementById('page-title').innerText = tabId === 'results' ? '결과 데이터베이스' : '분석 및 설정';
+            document.getElementById('page-title').innerText = tabId === 'results' ? '분석 결과 리포트' : '분석 엔진 설정';
         }
 
         function handleFiles(e) {
             const files = Array.from(e.target.files);
-            files.forEach(f => queue.push({ file: f, name: f.name }));
+            files.forEach(f => queue.push({ file: f, name: f.name, id: Math.random().toString(36).substr(2, 9) }));
             renderQueue();
             e.target.value = '';
         }
 
         function renderQueue() {
             const list = document.getElementById('queue-list');
-            if (queue.length === 0) { list.innerHTML = "선택된 파일 없음"; return; }
-            list.innerHTML = queue.map(i => `<div>• ${i.name}</div>`).join('');
+            const empty = document.getElementById('queue-empty');
+            if (queue.length === 0) {
+                list.innerHTML = "";
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            list.innerHTML = queue.map(i => `
+                <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <i class="far fa-file-alt text-slate-400"></i>
+                        <span class="text-xs font-bold text-slate-700 truncate">${i.name}</span>
+                    </div>
+                    <button onclick="removeFromQueue('${i.id}')" class="text-slate-300 hover:text-red-500 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeFromQueue(id) {
+            queue = queue.filter(q => q.id !== id);
+            renderQueue();
         }
 
         async function processAnalysis() {
             const jd = document.getElementById('jd-text').value.trim();
-            if (!jd || queue.length === 0) return alert("JD 내용과 분석할 이력서 파일을 모두 등록해 주세요.");
+            if (!jd || queue.length === 0) return alert("JD 내용과 분석할 파일을 모두 등록해 주세요.");
 
             const spinner = document.getElementById('loading-spinner');
             spinner.classList.remove('hidden');
@@ -234,44 +275,86 @@
                     const base64 = await fileToBase64(item.file);
                     const fileUrl = URL.createObjectURL(item.file);
                     
-                    // 프롬프트 개선: JD 기반 범용 분석 지시
-                    const prompt = `당신은 전문 채용 담당자입니다. 제공된 이력서 이미지를 읽고 아래 [채용 공고]의 요구사항과 비교하여 분석 결과를 JSON으로 출력하세요.
-                    직무에 관계없이 이력서에 기재된 모든 텍스트를 분석하여 핵심 정보를 추출해야 합니다.
+                    const prompt = `당신은 세계 최고의 채용 전문가이자 데이터 추출가입니다. 
+                    제공된 이력서 이미지를 픽셀 단위로 정밀 분석하여 텍스트를 추출하고 정보를 구조화하세요.
+                    레이아웃에 관계없이 성명, 학력, 경력 정보를 반드시 찾아내야 합니다.
 
-                    [채용 공고 (JD)]
+                    [중요 규칙]
+                    1. 정보를 찾을 수 없는 경우 절대 임의로 생성하지 말고 "정보 없음" 또는 0으로 표기하세요.
+                    2. JD(Job Description) 내용을 기준으로 후보자의 적합성을 평가하세요.
+                    3. 경력 년수는 전체 기간을 합산하여 계산하세요.
+                    4. 'score'는 0.0에서 5.0 사이의 숫자여야 합니다.
+                    5. 반드시 순수 JSON 데이터만 출력하고 다른 설명이나 마크다운 코드 블록(예: \`\`\`json)은 포함하지 마세요.
+
+                    [대상 JD]
                     ${jd}
 
-                    [응답 JSON 형식]
+                    [JSON 응답 스키마]
                     {
-                        "name": "성명(확인 불가시 파일명)",
-                        "education": "최종학력 및 전공 (예: 서울대학교 경영학과)",
-                        "career_years": "총 경력 년수 (예: 5년 6개월)",
-                        "last_job": "주요 경력사항 또는 최종 직장명",
-                        "score": 0.0~5.0 (JD와의 부합도를 소수점 첫째자리까지 평가),
-                        "one_liner": "후보자의 핵심 강점 1줄 요약",
+                        "name": "성명 (찾지 못할 경우 '후보자'로 표기)",
+                        "education": "최종학력 및 전공 (예: OO대학교 OO학 전공)",
+                        "career_years": "총 경력 년수 (예: 7년 2개월)",
+                        "key_career": "핵심 경력/직장명 1~2개",
+                        "score": 4.5,
+                        "analysis_summary": "후보자의 전체적인 강점과 JD 매칭 포인트를 100자 이내로 요약",
                         "details": {
-                            "strengths": ["JD와 매칭되는 강점1", "강점2", "강점3"],
-                            "reason": "해당 후보자를 이 포지션에 추천하거나 반려하는 이유 (상세히)",
-                            "fit_analysis": "JD에서 요구하는 핵심 기술/경력과 후보자 이력서의 일치성 분석 결과"
+                            "pros": ["강점1", "강점2"],
+                            "cons": ["부족한 점1", "부족한 점2"],
+                            "matching_reason": "JD와 비교했을 때 이 후보자가 적합한 구체적인 이유",
+                            "skills": ["이력서에서 추출한 주요 기술/도구 리스트"]
                         }
                     }`;
 
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: item.file.type || "image/png", data: base64 } }] }],
-                            generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
+                            contents: [{ 
+                                parts: [
+                                    { text: prompt }, 
+                                    { inlineData: { mimeType: item.file.type || "image/png", data: base64 } }
+                                ] 
+                            }],
+                            generationConfig: { 
+                                responseMimeType: "application/json", 
+                                temperature: 0.1 
+                            }
                         })
                     });
 
-                    const json = await res.json();
-                    const data = JSON.parse(json.candidates[0].content.parts[0].text);
+                    const resultJson = await response.json();
+                    let responseText = resultJson.candidates[0].content.parts[0].text;
+                    
+                    // JSON 데이터 클리닝 로직 추가 (마크다운 태그 등 제거)
+                    const jsonStart = responseText.indexOf('{');
+                    const jsonEnd = responseText.lastIndexOf('}') + 1;
+                    if (jsonStart !== -1 && jsonEnd !== -1) {
+                        responseText = responseText.substring(jsonStart, jsonEnd);
+                    }
 
-                    results.push({ ...data, fileUrl, id: Date.now() + Math.random() });
+                    const extractedData = JSON.parse(responseText);
+
+                    results.push({
+                        ...extractedData,
+                        id: Date.now() + Math.random(),
+                        fileUrl: fileUrl
+                    });
+                    
                     renderResults();
-                } catch (err) { 
-                    console.error("분석 실패:", err);
+                } catch (err) {
+                    console.error("분석 중 오류:", err);
+                    results.push({
+                        name: item.name,
+                        education: "파싱 실패",
+                        career_years: "정보 없음",
+                        key_career: "오류 발생",
+                        score: 0.0,
+                        analysis_summary: "이미지에서 데이터를 추출하는 데 실패했습니다. 파일 형식을 확인해 주세요.",
+                        details: { pros: [], cons: [], matching_reason: "데이터 추출 실패 (JSON 파싱 에러)", skills: [] },
+                        id: Date.now() + Math.random(),
+                        fileUrl: URL.createObjectURL(item.file)
+                    });
+                    renderResults();
                 }
             }
 
@@ -291,40 +374,33 @@
 
         function renderResults() {
             const tbody = document.getElementById('result-tbody');
-            document.getElementById('result-count').innerText = results.length;
-
             if (results.length === 0) {
-                tbody.innerHTML = `<tr id="empty-row"><td colspan="9" class="text-center py-32 text-slate-300 font-medium">분석 결과가 없습니다. '분석 및 설정' 탭에서 시작하세요.</td></tr>`;
-                document.getElementById('select-all').checked = false;
-                updateDeleteButton();
+                tbody.innerHTML = `<tr id="empty-row"><td colspan="8" class="text-center py-40">...</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = results.map((r, idx) => `
                 <tr onclick="showDetails(${idx})">
-                    <td onclick="event.stopPropagation()">
-                        <input type="checkbox" ${selectedIds.has(r.id) ? 'checked' : ''} onchange="toggleSelect('${r.id}')">
+                    <td onclick="event.stopPropagation()" class="text-center">
+                        <input type="checkbox" ${selectedIds.has(r.id) ? 'checked' : ''} onchange="toggleSelect('${r.id}')" class="w-4 h-4 rounded accent-indigo-600">
                     </td>
-                    <td class="text-slate-400 font-mono text-[11px]">${idx + 1}</td>
-                    <td class="font-bold text-slate-800">${r.name}</td>
-                    <td>${r.education}</td>
-                    <td>${r.career_years}</td>
-                    <td>${r.last_job}</td>
-                    <td>
-                        <div class="flex items-center">
-                            <span class="score-dot ${r.score >= 4 ? 'bg-green-500' : (r.score >= 2.5 ? 'bg-amber-500' : 'bg-red-400')}"></span>
-                            <span class="font-black text-slate-800">${parseFloat(r.score).toFixed(1)}</span>
-                        </div>
+                    <td class="font-black text-slate-800">${r.name || '정보 없음'}</td>
+                    <td class="text-slate-600 font-medium">${r.education || '정보 없음'}</td>
+                    <td class="text-center font-bold text-indigo-600">${r.career_years || '0년'}</td>
+                    <td class="text-slate-500 truncate max-w-[200px]">${r.key_career || '정보 없음'}</td>
+                    <td class="text-center">
+                        <span class="score-badge ${r.score >= 4 ? 'bg-green-100 text-green-700' : (r.score >= 2.5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700')}">
+                            ${parseFloat(r.score || 0).toFixed(1)} / 5.0
+                        </span>
                     </td>
-                    <td>
-                        <a href="${r.fileUrl}" target="_blank" onclick="event.stopPropagation()" class="px-3 py-1 bg-slate-100 hover:bg-indigo-100 hover:text-indigo-600 rounded text-[11px] font-bold transition-all inline-block">
-                            <i class="far fa-file-pdf mr-1"></i> 보기
+                    <td class="text-center">
+                        <a href="${r.fileUrl}" target="_blank" onclick="event.stopPropagation()" class="text-slate-400 hover:text-indigo-600 transition-colors">
+                            <i class="fas fa-external-link-alt"></i>
                         </a>
                     </td>
-                    <td class="text-slate-500 text-[12px] truncate max-w-[200px]">${r.one_liner}</td>
+                    <td class="text-slate-500 text-xs italic">${r.analysis_summary || '분석 결과 없음'}</td>
                 </tr>
             `).join('');
-            
             updateDeleteButton();
         }
 
@@ -332,8 +408,6 @@
             if (selectedIds.has(id)) selectedIds.delete(id);
             else selectedIds.add(id);
             updateDeleteButton();
-            const allChecked = results.length > 0 && results.every(r => selectedIds.has(r.id));
-            document.getElementById('select-all').checked = allChecked;
         }
 
         function toggleSelectAll(master) {
@@ -350,7 +424,6 @@
         }
 
         function deleteSelected() {
-            if (!confirm(`선택한 ${selectedIds.size}명의 데이터를 삭제하시겠습니까?`)) return;
             results = results.filter(r => !selectedIds.has(r.id));
             selectedIds.clear();
             document.getElementById('select-all').checked = false;
@@ -364,53 +437,59 @@
             const content = document.getElementById('details-content');
             
             content.innerHTML = `
-                <div class="flex items-center gap-4 mb-8">
-                    <div class="w-16 h-16 rounded-2xl bg-slate-900 flex items-center justify-center text-white text-2xl font-black shadow-xl">
-                        ${data.name.charAt(0)}
-                    </div>
-                    <div>
-                        <h4 class="text-2xl font-black text-slate-800">${data.name}</h4>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-xs font-bold text-indigo-600 px-2 py-0.5 bg-indigo-50 rounded">${data.career_years}</span>
-                            <span class="text-[11px] font-medium text-slate-400">${data.education}</span>
+                <div class="mb-10">
+                    <div class="flex items-center gap-5 mb-4">
+                        <div class="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center text-white text-3xl font-black shadow-2xl">
+                            ${(data.name || "후").charAt(0)}
+                        </div>
+                        <div>
+                            <h4 class="text-3xl font-black text-slate-800 tracking-tighter">${data.name || '정보 없음'}</h4>
+                            <div class="flex items-center gap-2 mt-2">
+                                <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md text-[11px] font-black uppercase">${data.career_years || '0년'} 경력</span>
+                                <span class="text-xs font-bold text-slate-400">${data.education || '정보 없음'}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="space-y-6">
+                <div class="space-y-8">
                     <section>
-                        <h5 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">종합 채용 의견</h5>
-                        <p class="text-sm text-slate-600 leading-relaxed font-medium bg-slate-50 p-4 rounded-xl border border-slate-100">${data.details.reason}</p>
+                        <h5 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Core Recommendation</h5>
+                        <div class="p-6 bg-slate-900 rounded-2xl text-slate-100 text-sm leading-relaxed font-medium">
+                            ${data.details.matching_reason || '분석 데이터를 불러올 수 없습니다.'}
+                        </div>
                     </section>
 
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-5 bg-green-50 rounded-2xl border border-green-100">
+                            <h6 class="text-[10px] font-black text-green-600 uppercase mb-3">Strong Points</h6>
+                            <ul class="space-y-2">
+                                ${(data.details.pros || []).map(p => `<li class="text-xs font-bold text-slate-700 flex items-center gap-2"><i class="fas fa-check-circle text-green-400 text-[10px]"></i> ${p}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="p-5 bg-red-50 rounded-2xl border border-red-100">
+                            <h6 class="text-[10px] font-black text-red-600 uppercase mb-3">Risk Points</h6>
+                            <ul class="space-y-2">
+                                ${(data.details.cons || []).map(c => `<li class="text-xs font-bold text-slate-700 flex items-center gap-2"><i class="fas fa-exclamation-circle text-red-300 text-[10px]"></i> ${c}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+
                     <section>
-                        <h5 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">핵심 역량 키워드</h5>
+                        <h5 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Extracted Skillset</h5>
                         <div class="flex flex-wrap gap-2">
-                            ${data.details.strengths.map(s => `
-                                <span class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-bold shadow-sm"># ${s}</span>
+                            ${(data.details.skills || []).map(s => `
+                                <span class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-extrabold shadow-sm hover:border-indigo-300 transition-colors"># ${s}</span>
                             `).join('')}
                         </div>
                     </section>
 
-                    <section class="pt-6 border-t border-slate-100">
-                        <h5 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">JD 일치성 분석</h5>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center text-xs">
-                                <span class="text-slate-500 font-bold">JD 적합도 점수</span>
-                                <span class="font-black text-indigo-600">${(data.score * 20).toFixed(0)}%</span>
-                            </div>
-                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                <div class="bg-indigo-600 h-full transition-all duration-1000" style="width: ${data.score * 20}%"></div>
-                            </div>
-                            <p class="text-[12px] text-slate-500 leading-relaxed">${data.details.fit_analysis}</p>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="mt-12">
-                    <a href="${data.fileUrl}" target="_blank" class="block w-full py-4 bg-slate-900 text-white text-center rounded-xl font-bold text-sm hover:bg-black transition-all shadow-lg">
-                        이력서 원본 파일 확인
-                    </a>
+                    <div class="pt-10 border-t border-slate-100">
+                        <a href="${data.fileUrl}" target="_blank" class="flex items-center justify-center w-full py-4 bg-slate-100 text-slate-600 rounded-xl font-black text-xs hover:bg-slate-200 transition-all gap-2">
+                            <i class="far fa-file-pdf"></i>
+                            이력서 원본 파일 열기
+                        </a>
+                    </div>
                 </div>
             `;
 
