@@ -9,7 +9,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
-        .sidebar { background: #0a0f1e; }
         .active-tab { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%) !important; color: white !important; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -23,16 +22,13 @@
         .loading-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(10, 15, 30, 0.9); backdrop-filter: blur(10px); align-items: center; justify-content: center; }
         .loading-overlay.active { display: flex; }
         
-        .score-circle { width: 40px; height: 40px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
-        .score-high { background: #ecfdf5; color: #059669; border: 1px solid #10b98120; }
-        .score-mid { background: #fffbeb; color: #d97706; border: 1px solid #f59e0b20; }
-        .score-low { background: #fef2f2; color: #dc2626; border: 1px solid #ef444420; }
+        .score-circle { width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+        .score-high { background: #ecfdf5; color: #059669; }
+        .score-mid { background: #fffbeb; color: #d97706; }
         
-        .editable-cell:hover { background-color: #f1f5f9; cursor: pointer; }
-        .editable-cell:focus { background-color: white; outline: 2px solid #6366f1; border-radius: 4px; }
-        
-        .badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-        .badge-indigo { background: #eef2ff; color: #4f46e5; }
+        .editable-age { cursor: text; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; border: 1px solid transparent; }
+        .editable-age:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .editable-age:focus { background: white; outline: 2px solid #6366f1; border-color: transparent; }
     </style>
 </head>
 <body class="h-screen w-screen flex overflow-hidden text-slate-900">
@@ -44,13 +40,13 @@
                 <div class="absolute inset-0 border-4 border-indigo-500/20 rounded-full"></div>
                 <div class="absolute inset-0 border-t-4 border-indigo-500 rounded-full animate-spin"></div>
             </div>
-            <p id="loading-status" class="text-white font-bold text-lg tracking-tight">분석 진행 중...</p>
+            <p id="loading-status" class="text-white font-bold text-lg tracking-tight">AI가 분석 중입니다...</p>
             <p id="loading-detail" class="text-slate-400 text-sm mt-2 font-medium"></p>
         </div>
     </div>
 
     <!-- Sidebar -->
-    <aside class="sidebar w-64 shrink-0 flex flex-col z-50">
+    <aside class="w-64 shrink-0 flex flex-col z-50 bg-[#0a0f1e]">
         <div class="p-8">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -64,40 +60,43 @@
                 <i class="fas fa-upload w-5"></i> 분석 및 업로드
             </button>
             <button onclick="switchTab('list')" id="tab-list" class="w-full flex items-center gap-3 px-5 py-3 rounded-xl text-slate-400 transition-all font-bold text-sm text-left">
-                <i class="fas fa-database w-5"></i> 인재 DB
+                <i class="fas fa-database w-5"></i> 인재 DB 관리
             </button>
         </nav>
         <div class="p-6">
             <div class="p-4 bg-slate-800/50 rounded-2xl border border-slate-700/50">
                 <div class="flex items-center gap-2">
                     <div id="api-indicator" class="w-2 h-2 rounded-full bg-slate-600"></div>
-                    <span id="api-status-text" class="text-[11px] font-bold text-slate-400 tracking-tight">System Booting...</span>
+                    <span id="api-status-text" class="text-[11px] font-bold text-slate-400 tracking-tight">시스템 준비 중</span>
                 </div>
             </div>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0">
+    <main class="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
         <header class="h-16 px-8 flex items-center justify-between bg-white border-b border-slate-200">
-            <h2 id="view-title" class="font-bold text-slate-800">이력서 정밀 분석</h2>
+            <h2 id="view-title" class="font-bold text-slate-800">이력서 정밀 분석 시스템</h2>
         </header>
 
-        <div class="flex-1 overflow-hidden relative bg-[#f8fafc]">
+        <div class="flex-1 overflow-hidden relative">
             <!-- Upload View -->
             <div id="view-upload" class="h-full overflow-y-auto p-8 custom-scroll">
                 <div class="max-w-4xl mx-auto space-y-6">
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 block italic">Job Requirements (JD)</label>
-                        <textarea id="jd-text" class="w-full h-24 p-5 bg-slate-50 rounded-2xl border border-slate-200 focus:border-indigo-500 outline-none text-sm font-medium transition-all resize-none" placeholder="비워두면 종합 역량 분석을 진행합니다."></textarea>
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 block italic">모집 직무 요건 (JD)</label>
+                        <textarea id="jd-text" class="w-full h-24 p-5 bg-slate-50 rounded-2xl border border-slate-200 focus:border-indigo-500 outline-none text-sm font-medium transition-all resize-none" placeholder="비워두면 일반적인 역량 분석을 진행합니다."></textarea>
                     </div>
 
-                    <div id="drop-zone" class="h-64 bg-white border-2 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
-                        <input type="file" id="file-input" multiple class="hidden" accept=".pdf,image/*">
-                        <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-500 transition-all">
+                    <!-- Drop Zone / Upload Button -->
+                    <div id="drop-zone" class="h-64 bg-white border-2 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group relative">
+                        <!-- Hidden File Input -->
+                        <input type="file" id="file-input" multiple class="absolute inset-0 opacity-0 cursor-pointer" accept=".pdf,image/*">
+                        
+                        <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-500 transition-all pointer-events-none">
                             <i class="fas fa-cloud-upload-alt text-2xl text-slate-400 group-hover:text-white"></i>
                         </div>
-                        <p class="font-extrabold text-slate-700 text-base">파일을 드래그하거나 클릭하여 선택하세요</p>
-                        <p class="text-[12px] text-slate-400 mt-1 font-medium italic">PDF, JPG, PNG 지원</p>
+                        <p class="font-extrabold text-slate-700 text-base pointer-events-none">이곳을 클릭하거나 파일을 드래그하세요</p>
+                        <p class="text-[12px] text-slate-400 mt-1 font-medium italic pointer-events-none">PDF, JPG, PNG 파일 지원</p>
                     </div>
 
                     <div id="queue-container" class="hidden space-y-3">
@@ -105,7 +104,7 @@
                     </div>
 
                     <button id="process-btn" onclick="startProcessing()" class="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-lg hover:bg-indigo-600 active:scale-[0.98] transition-all shadow-xl shadow-slate-200">
-                        <i class="fas fa-bolt mr-2 text-amber-400"></i> AI 분석 실행
+                        <i class="fas fa-bolt mr-2 text-amber-400"></i> 분석 시작하기
                     </button>
                 </div>
             </div>
@@ -113,26 +112,26 @@
             <!-- List View -->
             <div id="view-list" class="h-full flex flex-col p-8 hidden">
                 <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-                    <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center">
+                    <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                         <h3 class="font-black text-slate-800 text-lg flex items-center gap-2">
-                            <i class="fas fa-list-ul text-indigo-500 text-sm"></i> 분석 결과 리스트
+                            <i class="fas fa-list-ul text-indigo-500 text-sm"></i> 분석 결과 현황
                         </h3>
-                        <span id="total-badge" class="px-4 py-1 bg-slate-100 rounded-full text-[10px] font-black text-slate-500 tracking-tighter italic">LOADED: 0</span>
+                        <span id="total-badge" class="px-4 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-500 tracking-tighter italic">Total: 0</span>
                     </div>
                     <div class="flex-1 overflow-auto p-6 custom-scroll">
                         <table class="res-table">
                             <thead>
                                 <tr>
-                                    <th width="40">NO</th>
-                                    <th class="text-left" width="100">성명</th>
+                                    <th width="40">No</th>
+                                    <th class="text-left" width="100">이름</th>
                                     <th width="60">성별</th>
-                                    <th width="70">나이(수정)</th>
+                                    <th width="80">나이(수정)</th>
                                     <th width="120">최종학력</th>
                                     <th width="140">전공</th>
                                     <th width="100">경력</th>
                                     <th class="text-left">직전 기업</th>
                                     <th width="80">AI 점수</th>
-                                    <th width="60">보기</th>
+                                    <th width="60">관리</th>
                                 </tr>
                             </thead>
                             <tbody id="data-rows"></tbody>
@@ -146,8 +145,8 @@
     <!-- Modal -->
     <div id="detail-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6">
         <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="closeDetail()"></div>
-        <div class="bg-white w-full max-w-6xl h-[85vh] rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col md:flex-row">
-            <div class="w-full md:w-1/2 bg-slate-100 p-4 border-r border-slate-200">
+        <div class="bg-white w-full max-w-6xl h-[85vh] rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex">
+            <div class="w-1/2 bg-slate-100 p-4 border-r border-slate-200">
                 <div class="w-full h-full bg-white rounded-2xl overflow-hidden shadow-inner border border-slate-200">
                     <iframe id="viewer-pdf" class="w-full h-full border-none hidden"></iframe>
                     <div id="viewer-img-container" class="w-full h-full flex items-center justify-center hidden bg-slate-50 overflow-auto">
@@ -155,37 +154,37 @@
                     </div>
                 </div>
             </div>
-            <div class="w-full md:w-1/2 p-10 overflow-y-auto custom-scroll bg-white">
+            <div class="w-1/2 p-10 overflow-y-auto custom-scroll bg-white">
                 <div class="mb-8">
-                    <div class="flex items-center gap-2 mb-2"><span class="badge badge-indigo">AI HR Insight</span></div>
-                    <h3 id="det-name" class="text-3xl font-black text-slate-900 tracking-tight">지원자 성함</h3>
+                    <div class="flex items-center gap-2 mb-2"><span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded text-[10px] font-black">AI HR INSIGHT</span></div>
+                    <h3 id="det-name" class="text-3xl font-black text-slate-900 tracking-tight">지원자 정보</h3>
                     <p id="det-subinfo" class="text-sm text-slate-400 font-bold mt-1"></p>
                 </div>
 
                 <div class="space-y-6">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Career Path</span>
-                            <p id="det-experience" class="font-bold text-slate-800"></p>
+                            <span class="text-[10px] font-black text-slate-400 uppercase block mb-1">Career History</span>
+                            <p id="det-experience" class="font-bold text-slate-800 text-sm"></p>
                         </div>
                         <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Last Company</span>
-                            <p id="det-company" class="font-bold text-slate-800"></p>
+                            <span class="text-[10px] font-black text-slate-400 uppercase block mb-1">Latest Organization</span>
+                            <p id="det-company" class="font-bold text-slate-800 text-sm"></p>
                         </div>
                     </div>
 
                     <div class="p-6 bg-emerald-50/40 rounded-2xl border border-emerald-100">
-                        <h4 class="text-[10px] font-black text-emerald-600 uppercase mb-3"><i class="fas fa-check-circle mr-1"></i> 주요 강점</h4>
+                        <h4 class="text-[10px] font-black text-emerald-600 uppercase mb-3"><i class="fas fa-check-circle mr-1"></i> 핵심 역량 및 강점</h4>
                         <div id="det-reason" class="text-sm font-bold text-slate-600 leading-relaxed whitespace-pre-wrap"></div>
                     </div>
 
                     <div class="p-6 bg-rose-50/40 rounded-2xl border border-rose-100">
-                        <h4 class="text-[10px] font-black text-rose-600 uppercase mb-3"><i class="fas fa-exclamation-triangle mr-1"></i> 리스크 및 보완점</h4>
+                        <h4 class="text-[10px] font-black text-rose-600 uppercase mb-3"><i class="fas fa-exclamation-triangle mr-1"></i> 주의 필요 및 보완점</h4>
                         <div id="det-penalty" class="text-sm font-bold text-slate-600 leading-relaxed whitespace-pre-wrap"></div>
                     </div>
                 </div>
                 
-                <button onclick="closeDetail()" class="w-full mt-10 py-4 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition-all font-black text-xs tracking-widest uppercase">CLOSE REPORT</button>
+                <button onclick="closeDetail()" class="w-full mt-10 py-4 bg-slate-100 rounded-xl text-slate-500 hover:bg-slate-200 transition-all font-black text-xs tracking-widest uppercase">닫기</button>
             </div>
         </div>
     </div>
@@ -193,201 +192,231 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, updateDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Configs ---
+        // --- Firebase & System Init ---
         const firebaseConfig = JSON.parse(__firebase_config);
         const apiKey = ""; 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'est-ai-v2';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'est-ai-v3';
         const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let user = null;
-        let queue = [];
-        let resumes = [];
-        let unsubscribeData = null;
+        let currentUser = null;
+        let fileQueue = [];
+        let resumeList = [];
+        let dataUnsubscribe = null;
 
-        // --- Auth & Startup ---
-        const initAuth = async () => {
+        // --- Authentication Logic ---
+        const startAuth = async () => {
             try {
                 if (initialToken) await signInWithCustomToken(auth, initialToken);
                 else await signInAnonymously(auth);
-            } catch (err) { updateApiStatus("AUTH ERR", "bg-rose-500"); }
+            } catch (err) {
+                console.error("Auth Error:", err);
+                updateIndicator("연결 실패", "bg-rose-500");
+            }
         };
-        initAuth();
 
-        onAuthStateChanged(auth, u => {
-            user = u;
-            if (u) {
-                updateApiStatus("AI ONLINE", "bg-emerald-500");
-                subscribeToData();
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                updateIndicator("AI 활성화됨", "bg-emerald-500");
+                fetchData();
             }
         });
 
-        function updateApiStatus(text, color) {
+        const updateIndicator = (text, color) => {
             const ind = document.getElementById('api-indicator');
             const txt = document.getElementById('api-status-text');
-            if (ind && txt) { ind.className = `w-2 h-2 rounded-full ${color}`; txt.innerText = text; }
-        }
-
-        // --- Tab Logic ---
-        window.switchTab = (t) => {
-            document.getElementById('view-upload').classList.toggle('hidden', t !== 'upload');
-            document.getElementById('view-list').classList.toggle('hidden', t !== 'list');
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-tab'));
-            document.getElementById(`tab-${t}`).classList.add('active-tab');
+            if (ind && txt) {
+                ind.className = `w-2 h-2 rounded-full ${color} animate-pulse`;
+                txt.innerText = text;
+            }
         };
 
-        // --- File System ---
-        const fileInput = document.getElementById('file-input');
-        const dropZone = document.getElementById('drop-zone');
-        dropZone.onclick = () => fileInput.click();
-        fileInput.onchange = e => handleFiles(e.target.files);
-        
-        function handleFiles(files) {
-            if (!files.length) return;
-            queue = [...queue, ...Array.from(files)];
-            renderQueue();
-        }
+        startAuth();
 
-        window.removeQueue = (i) => { queue.splice(i, 1); renderQueue(); };
+        // --- Navigation ---
+        window.switchTab = (target) => {
+            document.getElementById('view-upload').classList.toggle('hidden', target !== 'upload');
+            document.getElementById('view-list').classList.toggle('hidden', target !== 'list');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-tab'));
+            document.getElementById(`tab-${target}`).classList.add('active-tab');
+        };
+
+        // --- File Upload Logic ---
+        const fileInput = document.getElementById('file-input');
+        
+        fileInput.addEventListener('change', (e) => {
+            const selectedFiles = Array.from(e.target.files);
+            if (selectedFiles.length > 0) {
+                fileQueue = [...fileQueue, ...selectedFiles];
+                renderQueue();
+            }
+        });
+
+        // 드래그 앤 드롭 방지 (브라우저 기본 동작 차단)
+        const dropZone = document.getElementById('drop-zone');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+            dropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const droppedFiles = Array.from(e.dataTransfer.files);
+            if (droppedFiles.length > 0) {
+                fileQueue = [...fileQueue, ...droppedFiles];
+                renderQueue();
+            }
+        });
+
+        window.removeFile = (idx) => {
+            fileQueue.splice(idx, 1);
+            renderQueue();
+        };
+
         function renderQueue() {
             const container = document.getElementById('queue-container');
             const list = document.getElementById('queue-list');
-            container.classList.toggle('hidden', queue.length === 0);
-            list.innerHTML = queue.map((f, i) => `
-                <div class="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+            container.classList.toggle('hidden', fileQueue.length === 0);
+            list.innerHTML = fileQueue.map((f, i) => `
+                <div class="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between shadow-sm">
                     <div class="flex items-center gap-2 overflow-hidden">
-                        <i class="fas fa-file-alt text-indigo-400 text-xs"></i>
+                        <i class="fas fa-file-pdf text-rose-500 text-xs"></i>
                         <span class="text-[11px] font-bold text-slate-700 truncate">${f.name}</span>
                     </div>
-                    <button onclick="removeQueue(${i})" class="text-slate-300 hover:text-rose-500 px-1"><i class="fas fa-times-circle"></i></button>
+                    <button onclick="removeFile(${i})" class="text-slate-300 hover:text-rose-500 transition-colors">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
                 </div>
             `).join('');
         }
 
-        // --- AI Processor ---
+        // --- AI Processing ---
         window.startProcessing = async () => {
-            if (!queue.length || !user) return alert("파일을 선택하거나 로그인 대기해주세요.");
-            
+            if (fileQueue.length === 0) return alert("분석할 파일을 먼저 선택해주세요.");
+            if (!currentUser) return alert("시스템 연결 중입니다. 잠시만 기다려주세요.");
+
             const overlay = document.getElementById('loading-overlay');
-            const statusText = document.getElementById('loading-status');
-            const detailText = document.getElementById('loading-detail');
-            const jd = document.getElementById('jd-text').value;
-            
+            const statusLabel = document.getElementById('loading-status');
+            const detailLabel = document.getElementById('loading-detail');
+            const jdContent = document.getElementById('jd-text').value;
+
             overlay.classList.add('active');
 
             try {
-                for (let i = 0; i < queue.length; i++) {
-                    const file = queue[i];
-                    statusText.innerText = `[${i+1}/${queue.length}] 데이터 추출 중...`;
-                    detailText.innerText = `${file.name} 처리 중`;
+                for (let i = 0; i < fileQueue.length; i++) {
+                    const file = fileQueue[i];
+                    statusLabel.innerText = `[${i + 1} / ${fileQueue.length}] AI 분석 중...`;
+                    detailLabel.innerText = `${file.name} 파일을 읽고 있습니다.`;
 
-                    const base64 = await fileToBase64(file);
-                    const result = await callGeminiAI(jd, file.type, base64);
+                    const base64Data = await convertToBase64(file);
+                    const aiResponse = await analyzeWithAI(jdContent, file.type, base64Data);
 
-                    if (result) {
+                    if (aiResponse) {
                         await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'resumes'), {
-                            ...result,
+                            ...aiResponse,
                             fileName: file.name,
                             mimeType: file.type,
-                            originalFile: base64,
-                            timestamp: serverTimestamp(),
-                            uploaderUid: user.uid
+                            fileData: base64Data,
+                            createdAt: serverTimestamp(),
+                            owner: currentUser.uid
                         });
                     }
                 }
-                queue = []; renderQueue();
+                fileQueue = [];
+                renderQueue();
                 overlay.classList.remove('active');
                 switchTab('list');
             } catch (err) {
+                console.error("Processing Error:", err);
                 overlay.classList.remove('active');
-                alert("분석 실패: " + err.message);
+                alert("분석 중 오류가 발생했습니다: " + err.message);
             }
         };
 
-        async function callGeminiAI(jd, mime, base64) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const sysPrompt = `HR 전문가로서 이력서를 분석하세요. JSON 형식으로만 응답하세요.
+        const convertToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        async function analyzeWithAI(jd, mime, base64) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const prompt = `이력서 데이터를 추출하여 JSON으로 응답하세요.
             - name: 이름
-            - gender: 남성/여성/미상
-            - age: 숫자만 (예: "30")
+            - gender: 성별 (남성/여성/미상)
+            - age: 숫자만 추출 (예: 28)
             - education: 최종학력
             - major: 전공
-            - experience: 총 경력 (예: "5년 2개월")
-            - lastCompany: 직전/현재 근무 기업명
-            - score: 0~100 점수
-            - reason: 핵심 강점 3가지 (불렛포인트)
-            - penalty: 주의사항/보완점 (불렛포인트)`;
+            - experience: 총 경력 기간 (예: 4년 2개월)
+            - lastCompany: 가장 최근 직장명
+            - score: JD(${jd || '종합역량'}) 기준 적합도 점수 (0-100)
+            - reason: 주요 강점 3가지
+            - penalty: 주의깊게 확인해야 할 부분 1-2가지`;
 
-            const payload = {
+            const body = {
                 contents: [{ parts: [
-                    { text: `JD: ${jd || "종합 역량 평가"}` },
+                    { text: `Target JD: ${jd || 'General Talent'}` },
                     { inlineData: { mimeType: mime.includes('pdf') ? 'application/pdf' : 'image/png', data: base64 } }
                 ]}],
-                systemInstruction: { parts: [{ text: sysPrompt }] },
+                systemInstruction: { parts: [{ text: prompt }] },
                 generationConfig: { responseMimeType: "application/json" }
             };
 
-            const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
-            const data = await response.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            return JSON.parse(text);
+            const res = await fetch(endpoint, { method: 'POST', body: JSON.stringify(body) });
+            const data = await res.json();
+            return JSON.parse(data.candidates[0].content.parts[0].text);
         }
 
-        const fileToBase64 = f => new Promise((res, rej) => {
-            const r = new FileReader();
-            r.onload = () => res(r.result.split(',')[1]);
-            r.onerror = rej;
-            r.readAsDataURL(f);
-        });
-
-        // --- Data & Update ---
-        function subscribeToData() {
-            if (unsubscribeData) unsubscribeData();
-            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'resumes');
-            unsubscribeData = onSnapshot(colRef, (snap) => {
-                resumes = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-                    .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-                renderList();
-            }, (e) => console.error(e));
-        }
-
-        function renderList() {
-            const tbody = document.getElementById('data-rows');
-            document.getElementById('total-badge').innerText = `LOADED: ${resumes.length}`;
+        // --- Data Handling ---
+        function fetchData() {
+            if (dataUnsubscribe) dataUnsubscribe();
             
-            if (!resumes.length) {
-                tbody.innerHTML = `<tr><td colspan="10" class="py-20 text-slate-300 font-bold italic text-center">데이터가 없습니다.</td></tr>`;
+            const q = collection(db, 'artifacts', appId, 'public', 'data', 'resumes');
+            dataUnsubscribe = onSnapshot(q, (snapshot) => {
+                resumeList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                renderTable();
+            }, (err) => console.error("Firestore Error:", err));
+        }
+
+        function renderTable() {
+            const container = document.getElementById('data-rows');
+            document.getElementById('total-badge').innerText = `Total: ${resumeList.length}`;
+
+            if (resumeList.length === 0) {
+                container.innerHTML = `<tr><td colspan="10" class="py-24 text-slate-300 font-bold italic text-center text-sm">등록된 분석 데이터가 없습니다.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = resumes.map((d, i) => `
-                <tr class="group">
-                    <td class="font-black text-[10px] text-slate-300">${resumes.length - i}</td>
-                    <td class="text-left font-black text-slate-800 text-sm">${d.name || '-'}</td>
-                    <td><span class="text-[11px] font-bold text-slate-500">${d.gender || '-'}</span></td>
+            container.innerHTML = resumeList.map((item, idx) => `
+                <tr class="group hover:bg-slate-50/50 transition-colors">
+                    <td class="font-black text-[10px] text-slate-300">${resumeList.length - idx}</td>
+                    <td class="text-left font-black text-slate-800 text-sm">${item.name || '알 수 없음'}</td>
+                    <td><span class="text-[11px] font-bold text-slate-500">${item.gender || '-'}</span></td>
                     <td>
                         <div contenteditable="true" 
-                             onblur="updateAge('${d.id}', this.innerText)" 
-                             class="editable-cell font-black text-indigo-600 px-2 py-1 transition-all">
-                            ${d.age || '-'}
+                             onblur="updateAgeData('${item.id}', this.innerText)" 
+                             class="editable-age font-black text-indigo-600 inline-block min-w-[30px]">
+                            ${item.age || '-'}
                         </div>
                     </td>
-                    <td><span class="font-bold text-slate-600">${d.education || '-'}</span></td>
-                    <td class="text-xs font-medium text-slate-500">${d.major || '-'}</td>
-                    <td><span class="text-[11px] font-black text-slate-700">${d.experience || '-'}</span></td>
-                    <td class="text-left text-xs font-bold text-slate-600">${d.lastCompany || '-'}</td>
+                    <td><span class="font-bold text-slate-600 text-xs">${item.education || '-'}</span></td>
+                    <td class="text-[11px] font-medium text-slate-400">${item.major || '-'}</td>
+                    <td><span class="text-[11px] font-black text-slate-700">${item.experience || '-'}</span></td>
+                    <td class="text-left text-xs font-bold text-slate-600 truncate max-w-[120px]">${item.lastCompany || '-'}</td>
                     <td>
-                        <div class="score-circle ${(d.score || 0) >= 80 ? 'score-high' : 'score-mid'}">
-                            ${d.score || 0}
+                        <div class="score-circle ${item.score >= 80 ? 'score-high' : 'score-mid'}">
+                            ${item.score || 0}
                         </div>
                     </td>
                     <td>
-                        <button onclick="openDetail('${d.id}')" class="w-7 h-7 flex items-center justify-center bg-slate-50 rounded-lg text-slate-400 hover:bg-slate-900 hover:text-white transition-all">
+                        <button onclick="viewDetail('${item.id}')" class="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-400 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm">
                             <i class="fas fa-search-plus text-[10px]"></i>
                         </button>
                     </td>
@@ -395,37 +424,39 @@
             `).join('');
         }
 
-        window.updateAge = async (id, newAge) => {
-            if (!user) return;
-            const ageVal = newAge.trim();
+        window.updateAgeData = async (docId, newVal) => {
+            if (!currentUser) return;
+            const cleanVal = newVal.trim();
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'resumes', id);
-                await updateDoc(docRef, { age: ageVal });
-            } catch (err) { console.error("Update age failed:", err); }
+                const ref = doc(db, 'artifacts', appId, 'public', 'data', 'resumes', docId);
+                await updateDoc(ref, { age: cleanVal });
+            } catch (err) { console.error("Update error:", err); }
         };
 
-        window.openDetail = (id) => {
-            const d = resumes.find(x => x.id === id);
-            if (!d) return;
+        window.viewDetail = (id) => {
+            const data = resumeList.find(r => r.id === id);
+            if (!data) return;
 
-            document.getElementById('det-name').innerText = d.name || '지원자 성함';
-            document.getElementById('det-subinfo').innerText = `${d.gender} | ${d.age}세 | ${d.education} (${d.major})`;
-            document.getElementById('det-experience').innerText = d.experience || '정보 없음';
-            document.getElementById('det-company').innerText = d.lastCompany || '정보 없음';
-            document.getElementById('det-reason').innerText = d.reason || '';
-            document.getElementById('det-penalty').innerText = d.penalty || '';
+            document.getElementById('det-name').innerText = data.name || '지원자 정보';
+            document.getElementById('det-subinfo').innerText = `${data.gender} | ${data.age}세 | ${data.education} (${data.major})`;
+            document.getElementById('det-experience').innerText = data.experience || '정보 없음';
+            document.getElementById('det-company').innerText = data.lastCompany || '정보 없음';
+            document.getElementById('det-reason').innerText = data.reason || '분석 정보가 없습니다.';
+            document.getElementById('det-penalty').innerText = data.penalty || '특이사항 없음';
             
-            const vPdf = document.getElementById('viewer-pdf');
-            const vImgCont = document.getElementById('viewer-img-container');
-            const vImg = document.getElementById('viewer-img');
+            const pdfFrame = document.getElementById('viewer-pdf');
+            const imgArea = document.getElementById('viewer-img-container');
+            const imgTag = document.getElementById('viewer-img');
 
-            vPdf.classList.add('hidden'); vImgCont.classList.add('hidden');
-            if (d.mimeType?.includes('pdf')) {
-                vPdf.src = `data:application/pdf;base64,${d.originalFile}`;
-                vPdf.classList.remove('hidden');
+            pdfFrame.classList.add('hidden');
+            imgArea.classList.add('hidden');
+
+            if (data.mimeType?.includes('pdf')) {
+                pdfFrame.src = `data:application/pdf;base64,${data.fileData}`;
+                pdfFrame.classList.remove('hidden');
             } else {
-                vImg.src = `data:${d.mimeType || 'image/png'};base64,${d.originalFile}`;
-                vImgCont.classList.remove('hidden');
+                imgTag.src = `data:${data.mimeType};base64,${data.fileData}`;
+                imgArea.classList.remove('hidden');
             }
             document.getElementById('detail-modal').classList.remove('hidden');
         };
@@ -434,6 +465,7 @@
             document.getElementById('detail-modal').classList.add('hidden');
             document.getElementById('viewer-pdf').src = "";
         };
+
     </script>
 </body>
 </html>
