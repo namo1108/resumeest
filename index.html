@@ -3,447 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EST FAMILY | AI Resume Analyzer</title>
-    <!-- Tailwind CSS (GitHub 호환을 위한 최신 버전) -->
+    <title>EST FAMILY | AI Resume Analyzer v3.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome (백업 경로 포함) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; overflow: hidden; }
+        .sidebar { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); }
+        .active-tab { background-color: #6366f1 !important; color: white !important; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
+        .result-table th { position: sticky; top: 0; background: #f8fafc; z-index: 10; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #94a3b8; padding: 16px 12px; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        .result-table td { padding: 14px 12px; border-bottom: 1px solid #f1f5f9; background: white; font-size: 13px; vertical-align: middle; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
-        :root {
-            --brand-primary: #4f46e5;
-            --brand-dark: #1e1b4b;
-            --bg-light: #f8fafc;
-        }
-
-        body { 
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-            background-color: var(--bg-light);
-            color: #1e293b;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        /* 스크롤바 커스텀 */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-
-        .sidebar { background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%); }
-        .glass-card { background: rgba(255, 255, 255, 0.95); border: 1px solid #e2e8f0; }
+        /* Editable Input Style */
+        .editable-cell:focus { outline: 2px solid #6366f1; background-color: #f5f3ff; border-radius: 4px; }
         
-        /* 테이블 정밀 디자인 */
-        .result-table th {
-            background: #f8fafc;
-            color: #64748b;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 14px 16px;
-            border-bottom: 2px solid #f1f5f9;
-        }
-        .result-table td {
-            padding: 18px 16px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 13px;
-            background: white;
-            vertical-align: middle;
-        }
-        .result-table tr:hover td { background: #fdfdff; }
-
-        /* 애니메이션 */
-        .panel-slide {
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        /* 로딩 애니메이션 */
-        @keyframes pulse-soft {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-        .animate-soft { animation: pulse-soft 2s infinite; }
+        /* Modal Animation */
+        .modal-overlay { background-color: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); transition: all 0.3s; }
+        .modal-content { transform: translateY(20px); opacity: 0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-active .modal-content { transform: translateY(0); opacity: 1; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col md:flex-row overflow-hidden">
+<body class="h-screen w-screen flex flex-col md:flex-row">
 
     <!-- Sidebar -->
-    <aside class="sidebar w-full md:w-72 flex flex-col shrink-0 z-30 shadow-2xl overflow-y-auto">
+    <aside class="sidebar w-full md:w-64 shrink-0 flex flex-col z-30 shadow-2xl">
         <div class="p-8">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
-                    <i class="fas fa-brain text-indigo-300 text-2xl"></i>
+                <div class="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fas fa-brain text-white"></i>
                 </div>
                 <div>
-                    <h1 class="text-white text-xl font-black tracking-tighter italic leading-none">EST FAMILY</h1>
-                    <p class="text-indigo-300 text-[10px] font-bold uppercase tracking-[0.3em] mt-1">Extraction v2.5</p>
+                    <h1 class="text-white text-lg font-black tracking-tight">EST FAMILY</h1>
+                    <p class="text-indigo-400 text-[10px] font-bold tracking-widest uppercase">AI Intelligence</p>
                 </div>
             </div>
         </div>
-
-        <nav class="flex-1 px-4 space-y-2">
-            <button onclick="switchTab('upload')" id="btn-upload" class="tab-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all text-indigo-100 hover:bg-white/10 group">
-                <i class="fas fa-upload w-5 opacity-60 group-hover:opacity-100"></i>
-                <span class="font-bold text-sm">분석 엔진 설정</span>
+        <nav class="flex-1 px-4 space-y-1.5 mt-2">
+            <button onclick="switchTab('upload')" id="nav-upload" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold text-sm">
+                <i class="fas fa-layer-group opacity-60"></i> 분석 설정 및 업로드
             </button>
-            <button onclick="switchTab('results')" id="btn-results" class="tab-btn w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all bg-indigo-500 text-white shadow-xl shadow-indigo-900/50">
-                <i class="fas fa-list-check w-5"></i>
-                <span class="font-bold text-sm">분석 결과 리포트</span>
+            <button onclick="switchTab('results')" id="nav-results" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl text-slate-400 hover:bg-white/5 hover:text-white transition-all font-bold text-sm">
+                <i class="fas fa-chart-pie opacity-60"></i> 분석 결과 리포트
             </button>
         </nav>
-
-        <div class="p-6">
-            <div class="bg-black/20 rounded-2xl p-4 border border-white/5">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-[10px] font-black text-indigo-300 uppercase">Engine Status</span>
-                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                </div>
-                <p class="text-white/60 text-[11px] leading-relaxed">Gemini 2.5 Flash 정밀 분석 모드 활성화됨</p>
+        <div class="p-8 mt-auto">
+            <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
+                <p class="text-white font-bold text-[11px] mb-1">System Status</p>
+                <div class="flex items-center gap-2 text-[10px] text-emerald-400"><span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span> Gemini 2.5 Active</div>
             </div>
         </div>
     </aside>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col min-w-0 bg-slate-50 relative">
-        
-        <!-- Header -->
-        <header class="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
-            <div>
-                <h2 id="page-title" class="text-xl font-black text-slate-800 tracking-tight">분석 결과 리포트</h2>
-                <div class="flex items-center gap-2 mt-0.5">
-                    <span class="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Candidate Intelligence Center</p>
-                </div>
+    <!-- Main -->
+    <main class="flex-1 flex flex-col min-w-0 bg-white">
+        <header class="h-20 border-b border-slate-100 px-10 flex items-center justify-between bg-white/80 backdrop-blur-md z-20">
+            <div class="flex flex-col">
+                <h2 id="title-text" class="text-xl font-black text-slate-900 tracking-tight">분석 결과 리포트</h2>
+                <p id="subtitle-text" class="text-xs text-slate-400 font-bold">후보자별 상세 역량 비교표</p>
             </div>
-            <div id="loading-indicator" class="hidden animate-soft">
-                <div class="px-5 py-2.5 bg-indigo-600 rounded-xl text-white text-xs font-black flex items-center gap-3">
-                    <i class="fas fa-circle-notch fa-spin"></i>
-                    AI 분석 엔진 동작 중...
-                </div>
+            <div id="loader" class="hidden flex items-center gap-3 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl text-xs font-black shadow-lg shadow-indigo-200">
+                <i class="fas fa-circle-notch fa-spin"></i> AI 심층 분석 처리 중
             </div>
         </header>
 
-        <!-- Content Container -->
-        <div class="flex-1 overflow-hidden relative">
-            
-            <!-- Tab 1: Upload Config -->
-            <div id="tab-upload" class="hidden h-full overflow-y-auto p-8 md:p-12">
+        <div class="flex-1 overflow-hidden relative bg-slate-50/50">
+            <!-- View: Upload -->
+            <div id="view-upload" class="hidden h-full overflow-y-auto p-10 custom-scroll">
                 <div class="max-w-4xl mx-auto space-y-8">
-                    <div class="glass-card p-10 rounded-[2.5rem] shadow-sm">
-                        <label class="block text-xs font-black text-indigo-500 uppercase tracking-widest mb-4">
-                            <i class="fas fa-file-alt mr-2"></i> Job Description (공고 내용)
-                        </label>
-                        <textarea id="jd-input" class="w-full h-48 p-6 bg-slate-50/50 border border-slate-200 rounded-3xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-sm leading-relaxed" placeholder="이력서와 매칭할 채용 공고의 핵심 요건을 입력하세요."></textarea>
+                    <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-[11px] font-black text-indigo-500 uppercase tracking-widest px-2">Job Description (JD)</label>
+                            <span class="text-[10px] bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-bold">필수 입력</span>
+                        </div>
+                        <textarea id="jd-input" class="w-full h-48 p-6 bg-slate-50 border border-slate-200 rounded-3xl text-sm leading-relaxed outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="채용하고자 하는 직무의 주요 역할과 필수 역량을 입력하세요."></textarea>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="glass-card p-12 rounded-[2.5rem] shadow-sm border-dashed border-2 border-slate-200 hover:border-indigo-400 transition-all cursor-pointer group flex flex-col items-center justify-center" onclick="document.getElementById('file-upload').click()">
-                            <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-indigo-600 transition-all">
-                                <i class="fas fa-cloud-upload-alt text-indigo-400 text-2xl group-hover:text-white"></i>
-                            </div>
-                            <span class="font-black text-slate-700">이력서 파일 업로드</span>
-                            <p class="text-[11px] text-slate-400 mt-2">PDF, PNG, JPG 파일 지원 (복수 선택)</p>
-                            <input type="file" id="file-upload" class="hidden" multiple onchange="handleFileQueue(event)">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+                        <div onclick="document.getElementById('file-input').click()" class="md:col-span-7 bg-white p-16 rounded-[2.5rem] border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/20 cursor-pointer transition-all flex flex-col items-center justify-center group shadow-sm">
+                            <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><i class="fas fa-file-pdf text-3xl"></i></div>
+                            <span class="text-lg font-black text-slate-800">이력서 파일 업로드</span>
+                            <p class="text-sm text-slate-400 mt-2 font-medium">PDF, Word 또는 이미지 파일 (최대 10개)</p>
+                            <input type="file" id="file-input" class="hidden" multiple onchange="handleFiles(event)">
                         </div>
-
-                        <div class="glass-card p-8 rounded-[2.5rem] shadow-sm flex flex-col">
-                            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Upload Queue</h3>
-                            <div id="queue-display" class="flex-1 overflow-y-auto space-y-2 min-h-[120px]">
-                                <div class="h-full flex flex-col items-center justify-center opacity-20 italic text-xs">
-                                    <i class="fas fa-inbox text-2xl mb-2"></i>
-                                    대기 중인 파일 없음
-                                </div>
+                        <div class="md:col-span-5 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col">
+                            <h4 class="text-[11px] font-black text-slate-400 uppercase mb-6 tracking-widest">파일 업로드 대기열</h4>
+                            <div id="file-queue" class="flex-1 overflow-y-auto max-h-[220px] space-y-3 custom-scroll">
+                                <div class="text-center py-12 text-slate-300 italic text-sm font-medium">대기 중인 파일이 없습니다.</div>
                             </div>
                         </div>
                     </div>
-
-                    <button onclick="startAnalysis()" class="w-full py-6 bg-indigo-600 text-white rounded-[2rem] font-black text-lg hover:bg-indigo-700 shadow-2xl shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center gap-4">
-                        <i class="fas fa-wand-magic-sparkles"></i>
-                        AI 데이터 추출 및 분석 시작
+                    <button onclick="processAnalysis()" class="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-lg shadow-2xl shadow-slate-200 hover:bg-black transition-all flex items-center justify-center gap-4 active:scale-[0.98]">
+                        <i class="fas fa-bolt-lightning text-yellow-400"></i> AI 심층 분석 시작
                     </button>
                 </div>
             </div>
 
-            <!-- Tab 2: Results Table -->
-            <div id="tab-results" class="h-full flex flex-col overflow-hidden">
-                <div class="flex-1 overflow-auto bg-white">
-                    <table class="result-table w-full border-collapse min-w-[1000px]">
-                        <thead>
-                            <tr class="sticky top-0 z-20 shadow-sm">
-                                <th class="w-16 text-center">#</th>
-                                <th class="w-40 text-left">후보자 성명</th>
-                                <th class="w-56 text-left">최종 학력 / 전공</th>
-                                <th class="w-32 text-center">총 경력</th>
-                                <th class="w-48 text-left">주요 이력</th>
-                                <th class="w-24 text-center">적합도</th>
-                                <th class="w-20 text-center">파일</th>
-                                <th class="text-left">AI 분석 평</th>
-                            </tr>
-                        </thead>
-                        <tbody id="result-list">
-                            <!-- 초기 빈 화면 -->
-                            <tr>
-                                <td colspan="8" class="text-center py-48">
-                                    <div class="opacity-10 flex flex-col items-center">
-                                        <i class="fas fa-folder-open text-6xl mb-4"></i>
-                                        <p class="font-black tracking-widest uppercase text-xl">데이터가 없습니다</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Side Panel: Detail View -->
-            <div id="detail-panel" class="panel-slide absolute top-0 right-0 w-full md:w-[600px] h-full bg-white shadow-[-30px_0_60px_rgba(0,0,0,0.1)] z-50 flex flex-col translate-x-full">
-                <div class="p-8 border-b border-slate-100 flex items-center justify-between shrink-0">
-                    <div>
-                        <h4 class="font-black text-2xl text-slate-800 tracking-tighter uppercase">Candidate Dossier</h4>
-                        <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest mt-1">EST FAMILY Proprietary AI Analysis</p>
+            <!-- View: Results -->
+            <div id="view-results" class="h-full flex flex-col">
+                <div class="flex-1 overflow-auto custom-scroll p-6">
+                    <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
+                        <table class="result-table w-full border-collapse">
+                            <thead>
+                                <tr>
+                                    <th class="w-16 text-center">No</th>
+                                    <th class="w-32 text-left">성명</th>
+                                    <th class="w-24 text-center">성별 (수정)</th>
+                                    <th class="w-24 text-center">나이 (수정)</th>
+                                    <th class="w-40 text-left">학위/전공</th>
+                                    <th class="w-40 text-left">최종학교</th>
+                                    <th class="w-24 text-center">총경력</th>
+                                    <th class="w-40 text-left">최종회사</th>
+                                    <th class="w-24 text-center">적합도</th>
+                                    <th class="text-left px-6">AI 분석평 (클릭 시 상세)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
                     </div>
-                    <button onclick="hideDetail()" class="w-12 h-12 rounded-2xl hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-all">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <div class="flex-1 overflow-y-auto p-10" id="detail-body">
-                    <!-- 데이터 동적 삽입 -->
                 </div>
             </div>
-
-            <!-- Panel Backdrop -->
-            <div id="panel-overlay" onclick="hideDetail()" class="hidden absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-40"></div>
         </div>
     </main>
 
-    <script>
-        const apiKey = ""; // API Key via environment
-        let fileQueue = [];
-        let processedResults = [];
-
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content, #tab-upload, #tab-results').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-indigo-500', 'text-white', 'shadow-xl');
-                btn.classList.add('text-indigo-100', 'hover:bg-white/10');
-            });
-
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
-            const targetBtn = document.getElementById(`btn-${tab}`);
-            targetBtn.classList.add('bg-indigo-500', 'text-white', 'shadow-xl');
-            targetBtn.classList.remove('text-indigo-100', 'hover:bg-white/10');
-            
-            document.getElementById('page-title').innerText = tab === 'results' ? '분석 결과 리포트' : '분석 엔진 설정';
-        }
-
-        function handleFileQueue(e) {
-            const files = Array.from(e.target.files);
-            files.forEach(file => {
-                fileQueue.push({
-                    id: Math.random().toString(36).substr(2, 9),
-                    file: file,
-                    name: file.name
-                });
-            });
-            renderQueue();
-            e.target.value = '';
-        }
-
-        function renderQueue() {
-            const container = document.getElementById('queue-display');
-            if (fileQueue.length === 0) {
-                container.innerHTML = `<div class="h-full flex flex-col items-center justify-center opacity-20 italic text-xs"><i class="fas fa-inbox text-2xl mb-2"></i>대기 중인 파일 없음</div>`;
-                return;
-            }
-            container.innerHTML = fileQueue.map(item => `
-                <div class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        <i class="far fa-file-pdf text-indigo-400"></i>
-                        <span class="text-xs font-bold text-slate-700 truncate">${item.name}</span>
+    <!-- Detailed Modal -->
+    <div id="modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-6">
+        <div class="modal-content bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden border border-slate-100">
+            <div class="p-10 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
+                <div class="flex items-center gap-5">
+                    <div class="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-100"><i class="fas fa-file-magnifying-glass text-xl"></i></div>
+                    <div>
+                        <h3 id="modal-name" class="text-2xl font-black text-slate-900">후보자 분석 보고서</h3>
+                        <p class="text-xs text-indigo-500 font-black uppercase tracking-widest mt-1">AI Recruitment Intelligence Report</p>
                     </div>
-                    <button onclick="removeFile('${item.id}')" class="text-slate-300 hover:text-red-500 transition-colors">
-                        <i class="fas fa-times-circle"></i>
-                    </button>
+                </div>
+                <button onclick="closeModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-slate-100 transition-colors text-slate-400"><i class="fas fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-10 space-y-8 overflow-y-auto max-h-[70vh] custom-scroll">
+                <div>
+                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-3 px-1">종합 요약 분석평</label>
+                    <div id="modal-summary" class="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 text-slate-800 font-bold leading-relaxed text-base"></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-[11px] font-black text-emerald-500 uppercase tracking-widest block mb-4 px-1 flex items-center gap-2">
+                            <i class="fas fa-circle-check"></i> 적합 사유 및 강점
+                        </label>
+                        <ul id="modal-pos-reasons" class="space-y-3"></ul>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-black text-rose-500 uppercase tracking-widest block mb-4 px-1 flex items-center gap-2">
+                            <i class="fas fa-circle-exclamation"></i> 주의 사항 및 부적합 요소
+                        </label>
+                        <ul id="modal-neg-reasons" class="space-y-3"></ul>
+                    </div>
+                </div>
+            </div>
+            <div class="p-8 bg-slate-50 flex justify-between items-center border-t border-slate-100">
+                <span class="text-[11px] text-slate-400 font-bold">EST FAMILY AI ANALYZER v3.5</span>
+                <button onclick="closeModal()" class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-black transition-all shadow-lg shadow-slate-200">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'est-family-resume-v3-5';
+        const apiKey = ""; 
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let user = null;
+        let queue = [];
+        let currentData = [];
+
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else { await signInAnonymously(auth); }
+            } catch (e) { await signInAnonymously(auth); }
+        };
+
+        onAuthStateChanged(auth, (u) => {
+            if (u) {
+                user = u;
+                subscribeData();
+            }
+        });
+        initAuth();
+
+        function subscribeData() {
+            if (!user) return;
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'analyses');
+            onSnapshot(colRef, (snapshot) => {
+                const results = [];
+                snapshot.forEach(doc => results.push({id: doc.id, ...doc.data()}));
+                results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                currentData = results;
+                renderTable(results);
+            }, (err) => console.error("Firestore Error:", err));
+        }
+
+        window.handleFiles = (e) => {
+            const files = Array.from(e.target.files);
+            queue = files.map(f => ({ file: f, name: f.name }));
+            document.getElementById('file-queue').innerHTML = queue.map(q => `
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+                    <i class="far fa-file-pdf text-indigo-500"></i>
+                    <span class="truncate text-xs font-bold text-slate-600">${q.name}</span>
                 </div>
             `).join('');
-        }
+        };
 
-        function removeFile(id) {
-            fileQueue = fileQueue.filter(f => f.id !== id);
-            renderQueue();
-        }
+        window.processAnalysis = async () => {
+            if (!user) return;
+            const jd = document.getElementById('jd-input').value;
+            if (!jd || queue.length === 0) return alert("JD와 분석할 파일을 모두 준비해주세요.");
+            
+            document.getElementById('loader').classList.remove('hidden');
 
-        async function startAnalysis() {
-            const jd = document.getElementById('jd-input').value.trim();
-            if (!jd) { alertModal("JD 내용을 입력해 주세요."); return; }
-            if (fileQueue.length === 0) { alertModal("분석할 이력서를 업로드해 주세요."); return; }
-
-            document.getElementById('loading-indicator').classList.remove('hidden');
-
-            for (const item of fileQueue) {
+            for (const item of queue) {
                 try {
                     const base64 = await toBase64(item.file);
-                    const prompt = `당신은 HR 전문가입니다. 제공된 이력서 이미지를 분석하여 아래 JSON 형식으로만 응답하세요.
-                    마크다운 태그 기호(\`\`\`json)를 절대 쓰지 말고 오직 순수 JSON 데이터만 출력하세요.
-
-                    {
-                        "name": "성명",
-                        "education": "학교명 및 전공",
-                        "career_years": "경력 기간(예: 5년 6개월)",
-                        "main_career": "핵심 경력 1문장",
-                        "score": 4.5,
-                        "summary": "JD 기반의 분석 요약 1줄",
-                        "pros": ["강점1", "강점2"],
-                        "cons": ["약점/우려점1"],
-                        "skills": ["보유 기술1", "기술2"],
-                        "fit_reason": "JD와 매칭되는 구체적인 이유"
-                    }
-
-                    [참고 JD]
-                    ${jd}`;
-
+                    const systemPrompt = `HR Expert AI. Analyze resume based on JD. Focus on identifying specific pros and cons. 
+                    - gender: If not found, return "". 
+                    - age: If not found, return "". 
+                    - strengths: 3 items (positive).
+                    - risks: 3 items (potential negatives or missing qualifications).
+                    JSON Format: {
+                        "name": "성명", "gender": "남/여", "age": "나이(숫자만)", "degree": "학위", "major": "전공", "school": "최종학교", "career": "총경력", "company": "최종회사", "score": 0.0,
+                        "summary": "종합분석평(1줄)", "strengths": ["사유1", "사유2", "사유3"], "risks": ["사유1", "사유2", "사유3"]
+                    }`;
+                    
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: [{
-                                parts: [
-                                    { text: prompt },
-                                    { inlineData: { mimeType: item.file.type || "image/png", data: base64 } }
-                                ]
-                            }],
+                            contents: [{ parts: [{ text: `Job Description: ${jd}` }, { inlineData: { mimeType: item.file.type, data: base64 } }] }],
+                            systemInstruction: { parts: [{ text: systemPrompt }] },
                             generationConfig: { responseMimeType: "application/json" }
                         })
                     });
 
-                    const jsonRes = await res.json();
-                    const rawContent = jsonRes.candidates[0].content.parts[0].text;
-                    const cleanJson = rawContent.match(/\{[\s\S]*\}/)[0];
-                    const data = JSON.parse(cleanJson);
-
-                    processedResults.push({
-                        ...data,
-                        fileUrl: URL.createObjectURL(item.file)
+                    const json = await res.json();
+                    const analysis = JSON.parse(json.candidates[0].content.parts[0].text);
+                    
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'analyses'), {
+                        ...analysis,
+                        fileName: item.name,
+                        timestamp: Date.now()
                     });
-                    renderResults();
-                } catch (err) {
-                    console.error("AI Analysis Failed:", err);
-                }
+                } catch (e) { console.error("Process Error:", e); }
             }
 
-            fileQueue = [];
-            renderQueue();
-            document.getElementById('loading-indicator').classList.add('hidden');
+            document.getElementById('loader').classList.add('hidden');
+            queue = [];
+            document.getElementById('file-queue').innerHTML = `<div class="text-center py-12 text-slate-300 italic text-sm font-medium">대기 중인 파일이 없습니다.</div>`;
             switchTab('results');
-        }
+        };
 
-        function toBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        function renderResults() {
-            const tbody = document.getElementById('result-list');
-            if (processedResults.length === 0) return;
-
-            tbody.innerHTML = processedResults.map((r, idx) => `
-                <tr onclick="showDetail(${idx})" class="cursor-pointer">
-                    <td class="text-center font-bold text-slate-300">${idx + 1}</td>
-                    <td class="font-black text-slate-800">${r.name || '미상'}</td>
-                    <td class="text-slate-500 font-medium">${r.education || '-'}</td>
-                    <td class="text-center font-black text-indigo-600 bg-indigo-50/30">${r.career_years || '-'}</td>
-                    <td class="text-slate-500 truncate max-w-[200px]">${r.main_career || '-'}</td>
+        function renderTable(data) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = data.map((r, i) => `
+                <tr class="hover:bg-slate-50 transition-colors group cursor-pointer" onclick="openDetailModal('${r.id}')">
+                    <td class="text-center text-slate-300 font-bold">${i+1}</td>
+                    <td class="font-black text-slate-900">${r.name || '알 수 없음'}</td>
+                    <td class="text-center" onclick="event.stopPropagation()">
+                        <input type="text" class="editable-cell w-16 text-center bg-transparent border-none font-bold text-slate-600 focus:bg-white" 
+                               value="${r.gender || ''}" placeholder="미기재" onblur="updateField('${r.id}', 'gender', this.value)">
+                    </td>
+                    <td class="text-center" onclick="event.stopPropagation()">
+                        <input type="text" class="editable-cell w-16 text-center bg-transparent border-none font-bold text-slate-600 focus:bg-white" 
+                               value="${r.age || ''}" placeholder="미기재" onblur="updateField('${r.id}', 'age', this.value)">
+                    </td>
+                    <td>
+                        <div class="font-bold text-indigo-600 text-[12px]">${r.degree || '-'}</div>
+                        <div class="text-slate-400 text-[11px] font-bold uppercase">${r.major || '-'}</div>
+                    </td>
+                    <td class="text-slate-700 font-bold text-[12px]">${r.school || '-'}</td>
+                    <td class="text-center font-black text-slate-900">${r.career || '-'}</td>
+                    <td class="text-slate-500 font-bold text-[12px] truncate max-w-[140px]">${r.company || '-'}</td>
                     <td class="text-center">
-                        <div class="inline-flex items-center justify-center px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full font-black text-[11px] border border-indigo-100">
-                            ${parseFloat(r.score).toFixed(1)} / 5.0
+                        <span class="px-3 py-1.5 ${r.score >= 4 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'bg-slate-100 text-slate-400'} rounded-xl font-black text-xs">
+                            ${parseFloat(r.score).toFixed(1)}
+                        </span>
+                    </td>
+                    <td class="px-6 text-slate-500 text-[12px] font-bold leading-snug group-hover:text-indigo-600 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="w-1 h-1 bg-indigo-300 rounded-full shrink-0"></span>
+                            ${r.summary || '분석 요약이 없습니다.'}
                         </div>
                     </td>
-                    <td class="text-center">
-                        <a href="${r.fileUrl}" target="_blank" onclick="event.stopPropagation()" class="w-8 h-8 inline-flex items-center justify-center bg-slate-50 text-slate-400 rounded-lg hover:bg-indigo-100 hover:text-indigo-600 transition-all">
-                            <i class="fas fa-external-link-alt text-[10px]"></i>
-                        </a>
-                    </td>
-                    <td class="text-slate-500 text-xs italic opacity-70 truncate max-w-[300px]">${r.summary || ''}</td>
                 </tr>
             `).join('');
         }
 
-        function showDetail(idx) {
-            const data = processedResults[idx];
-            const body = document.getElementById('detail-body');
+        window.updateField = async (id, field, value) => {
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'analyses', id);
+                await updateDoc(docRef, { [field]: value });
+            } catch (e) { console.error("Update Error:", e); }
+        };
+
+        window.openDetailModal = (id) => {
+            const data = currentData.find(a => a.id === id);
+            if (!data) return;
             
-            body.innerHTML = `
-                <div class="flex items-center gap-6 mb-12">
-                    <div class="w-20 h-20 bg-slate-900 rounded-[1.5rem] flex items-center justify-center text-white text-3xl font-black shadow-xl">
-                        ${(data.name || "U").charAt(0)}
-                    </div>
-                    <div>
-                        <h5 class="text-3xl font-black text-slate-800 tracking-tighter">${data.name || 'Unknown'}</h5>
-                        <p class="text-sm font-bold text-indigo-600 mt-1">${data.education || '-'}</p>
-                    </div>
-                </div>
+            document.getElementById('modal-name').innerText = `${data.name} 후보자 분석 보고서`;
+            document.getElementById('modal-summary').innerText = data.summary;
+            
+            const posList = document.getElementById('modal-pos-reasons');
+            const negList = document.getElementById('modal-neg-reasons');
+            
+            posList.innerHTML = (data.strengths || []).map(s => `
+                <li class="flex items-start gap-3 bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                    <i class="fas fa-check-circle text-emerald-500 mt-1"></i>
+                    <span class="text-slate-700 text-sm font-bold leading-relaxed">${s}</span>
+                </li>
+            `).join('');
+            
+            negList.innerHTML = (data.risks || []).map(r => `
+                <li class="flex items-start gap-3 bg-rose-50 p-4 rounded-2xl border border-rose-100">
+                    <i class="fas fa-circle-exclamation text-rose-500 mt-1"></i>
+                    <span class="text-slate-700 text-sm font-bold leading-relaxed">${r}</span>
+                </li>
+            `).join('');
+            
+            const modal = document.getElementById('modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.add('modal-active'), 10);
+        };
 
-                <div class="space-y-8">
-                    <div class="p-8 bg-slate-50 rounded-[2rem] border border-slate-100">
-                        <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Fit Reason (매칭 분석)</h6>
-                        <p class="text-slate-700 font-medium leading-relaxed text-sm">${data.fit_reason || '-'}</p>
-                    </div>
+        window.closeModal = () => {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('modal-active');
+            setTimeout(() => modal.classList.add('hidden'), 400);
+        };
 
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="p-6 bg-green-50/50 rounded-3xl border border-green-100">
-                            <h6 class="text-[10px] font-black text-green-600 uppercase mb-4">Key Strengths</h6>
-                            <ul class="space-y-2">
-                                ${(data.pros || []).map(p => `<li class="text-xs font-bold text-slate-700 flex items-start gap-2"><i class="fas fa-circle-check text-green-400 mt-0.5"></i> ${p}</li>`).join('')}
-                            </ul>
-                        </div>
-                        <div class="p-6 bg-red-50/50 rounded-3xl border border-red-100">
-                            <h6 class="text-[10px] font-black text-red-600 uppercase mb-4">Weaknesses</h6>
-                            <ul class="space-y-2">
-                                ${(data.cons || []).map(c => `<li class="text-xs font-bold text-slate-700 flex items-start gap-2"><i class="fas fa-circle-exclamation text-red-300 mt-0.5"></i> ${c}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
+        window.switchTab = (tab) => {
+            document.getElementById('view-upload').classList.add('hidden');
+            document.getElementById('view-results').classList.add('hidden');
+            document.getElementById('nav-upload').classList.remove('active-tab');
+            document.getElementById('nav-results').classList.remove('active-tab');
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).classList.add('active-tab');
+            
+            document.getElementById('title-text').innerText = tab === 'results' ? '분석 결과 리포트' : '분석 설정 및 업로드';
+            document.getElementById('subtitle-text').innerText = tab === 'results' ? '후보자별 상세 역량 비교표' : '직무 기술서 입력 및 이력서 데이터 추출';
+        };
 
-                    <div>
-                        <h6 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Core Skill Tags</h6>
-                        <div class="flex flex-wrap gap-2">
-                            ${(data.skills || []).map(s => `<span class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[11px] font-black text-slate-600 shadow-sm"># ${s}</span>`).join('')}
-                        </div>
-                    </div>
+        const toBase64 = f => new Promise((res, rej) => {
+            const r = new FileReader(); r.readAsDataURL(f);
+            r.onload = () => res(r.result.split(',')[1]); r.onerror = rej;
+        });
 
-                    <a href="${data.fileUrl}" target="_blank" class="w-full py-5 bg-slate-900 rounded-2xl flex items-center justify-center gap-3 font-black text-white hover:bg-black transition-all text-sm mt-8 shadow-xl shadow-slate-200">
-                        <i class="fas fa-file-pdf"></i> 원본 파일 보기
-                    </a>
-                </div>
-            `;
-
-            document.getElementById('detail-panel').classList.remove('translate-x-full');
-            document.getElementById('panel-overlay').classList.remove('hidden');
-        }
-
-        function hideDetail() {
-            document.getElementById('detail-panel').classList.add('translate-x-full');
-            document.getElementById('panel-overlay').classList.add('hidden');
-        }
-
-        function alertModal(msg) {
-            // 커스텀 알림 로직 (alert 대체)
-            const div = document.createElement('div');
-            div.className = "fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-2xl animate-bounce";
-            div.innerText = msg;
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 3000);
-        }
-
-        // 초기 실행
-        window.onload = () => switchTab('upload');
+        switchTab('upload');
     </script>
 </body>
 </html>
