@@ -1,38 +1,474 @@
-✔ 이런 업무를 담당합니다
-회사의 구매 업무, 자산 관리, 전산 IT 장비 관리를 종합적으로 담당하며, 원활한 업무 환경을 유지하는 중요한 역할을 맡게 됩니다. 사내 자산 관리 및 IT 장비의 운영과 유지보수, 그리고 구매 프로세스 관리를 통해 회사의 자원을 효율적으로 활용하고, 필요 장비와 자원을 적시에 제공하는 것이 핵심입니다.
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EST FAMILY | AI Intelligence v7.2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
+        .sidebar { background: #1e1e2d; }
+        .active-tab { background-color: #6366f1 !important; color: white !important; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .res-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .res-table th { position: sticky; top: 0; background: #fdfdfd; z-index: 10; padding: 16px 12px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: left; text-transform: uppercase; }
+        .res-table td { padding: 20px 12px; border-bottom: 1px solid #f1f5f9; background: white; font-size: 13px; vertical-align: middle; }
+        
+        .score-badge { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 14px; font-weight: 800; font-size: 14px; }
+        .score-high { background: #e0f2fe; color: #0369a1; }
+        .score-mid { background: #fef3c7; color: #b45309; }
+        .score-low { background: #fee2e2; color: #b91c1c; }
 
+        .loading-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
+        .loading-overlay.active { display: flex; }
+        
+        /* Skeleton Animation */
+        .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    </style>
+</head>
+<body class="h-screen w-screen flex overflow-hidden">
 
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="bg-white p-12 rounded-[3rem] text-center shadow-2xl max-w-sm w-full mx-4">
+            <div class="relative w-20 h-20 mx-auto mb-6">
+                <div class="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <h3 class="text-2xl font-black text-slate-900 mb-2">AI 정밀 분석 중</h3>
+            <p id="loading-status" class="text-slate-400 text-sm font-medium">문서 구조를 파악하고 역량을 대조하고 있습니다...</p>
+        </div>
+    </div>
 
-주요 업무로는 사내 비품 및 전산 장비의 구매, 발주, 자산 관리, 장비의 유지보수 및 A/S 관리, 구매 요청 및 발주부터 정산까지의 전반적인 프로세스 관리 등이 포함됩니다. 또한, 사내의 IT 장비와 자산의 수명 주기를 관리하고, 업무 효율성을 높일 수 있는 최적의 장비 환경을 지원하는 역할도 맡게 됩니다.
+    <!-- Sidebar -->
+    <aside class="sidebar w-72 shrink-0 flex flex-col shadow-2xl">
+        <div class="p-8">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fas fa-bolt text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-white text-lg font-black tracking-tight leading-none">EST FAMILY</h1>
+                    <p class="text-indigo-400 text-[10px] font-bold uppercase mt-1">AI INTELLIGENCE v7.2</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-1">
+            <button onclick="switchTab('upload')" id="tab-upload" class="active-tab w-full flex items-center gap-4 px-6 py-4 rounded-xl text-slate-400 hover:text-white transition-all font-bold text-sm">
+                <i class="fas fa-file-import"></i> 이력서 업로드
+            </button>
+            <button onclick="switchTab('list')" id="tab-list" class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-slate-400 hover:text-white transition-all font-bold text-sm">
+                <i class="fas fa-database"></i> 인재 분석 데이터
+            </button>
+        </nav>
 
+        <div class="p-6">
+            <div class="bg-slate-800/50 rounded-2xl p-4 border border-white/5">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span class="text-[10px] font-black text-emerald-500 uppercase">Cloud Sync Active</span>
+                </div>
+                <p class="text-[11px] text-slate-500 leading-relaxed font-medium">분석 결과는 실시간으로 클라우드에 동기화됩니다.</p>
+            </div>
+        </div>
+    </aside>
 
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+        <header class="h-20 border-b border-slate-200 px-10 flex items-center justify-between bg-white">
+            <div>
+                <h2 id="header-title" class="text-xl font-black text-slate-900">이력서 업로드</h2>
+                <p id="header-sub" class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">JD 기준 기술/경력 일치도 계산</p>
+            </div>
+            <div id="user-info" class="text-right">
+                <p class="text-[10px] text-slate-400 font-bold">CURRENT OPERATOR</p>
+                <p id="op-id" class="text-xs font-black text-slate-700 italic">Authenticating...</p>
+            </div>
+        </header>
 
+        <div class="flex-1 overflow-hidden relative">
+            <!-- View: Upload -->
+            <div id="view-upload" class="h-full overflow-y-auto p-10 custom-scroll">
+                <div class="max-w-5xl mx-auto space-y-8">
+                    <div class="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-6">
+                            <label class="text-sm font-black text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-pen-nib text-indigo-500"></i> 채용 공고 (Job Description)
+                            </label>
+                            <span class="text-[10px] font-bold text-slate-400">기준 정보가 명확할수록 분석 정확도가 올라갑니다.</span>
+                        </div>
+                        <textarea id="jd-text" class="w-full h-40 p-6 bg-slate-50 rounded-[2rem] border-2 border-transparent focus:border-indigo-500 focus:bg-white transition-all text-sm font-medium outline-none" placeholder="비교 기준이 될 직무 상세 내용을 입력하세요. (예: Python 중급 이상, AWS 경험자 등)"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <label class="cursor-pointer group">
+                            <input type="file" id="files" multiple accept=".pdf,image/*" class="hidden">
+                            <div class="h-64 border-4 border-dashed border-slate-200 rounded-[3rem] bg-white flex flex-col items-center justify-center group-hover:border-indigo-500 group-hover:bg-indigo-50 transition-all">
+                                <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-slate-300 group-hover:text-indigo-500"></i>
+                                </div>
+                                <p class="text-base font-black text-slate-800">이력서 파일 선택 (PDF/이미지)</p>
+                                <p class="text-xs text-slate-400 mt-2 font-bold">마우스로 파일을 끌어다 놓으셔도 됩니다.</p>
+                            </div>
+                        </label>
+                        <div class="bg-slate-900 rounded-[3rem] p-8 overflow-hidden flex flex-col shadow-2xl relative">
+                            <div class="flex items-center justify-between mb-6">
+                                <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">분석 대기열</p>
+                                <span id="queue-count" class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-[10px] font-black">0 FILES</span>
+                            </div>
+                            <div id="queue-list" class="flex-1 space-y-3 overflow-y-auto custom-scroll pr-2 text-white/30 text-xs italic">
+                                분석할 파일을 선택해주세요.
+                            </div>
+                        </div>
+                    </div>
 
+                    <button onclick="startProcessing()" class="w-full py-6 bg-indigo-600 text-white rounded-[2rem] font-black text-xl hover:bg-indigo-700 shadow-2xl shadow-indigo-600/30 transition-all active:scale-[0.98]">
+                        AI 정밀 분석 실행 <i class="fas fa-chevron-right ml-2 opacity-50"></i>
+                    </button>
+                </div>
+            </div>
 
-✔ 이런 역량을 갖춘 분을 찾습니다
-총무 관련 업무 경험
-5년 이상의 총무 및 사무 관리 관련 경력 (비품 관리, 시설 관리, 사무 보조 업무 등)
+            <!-- View: List -->
+            <div id="view-list" class="h-full flex flex-col p-8 hidden">
+                <div class="bg-white rounded-[3rem] border border-slate-200 shadow-xl overflow-hidden flex flex-col flex-1">
+                    <div class="flex-1 overflow-auto custom-scroll">
+                        <table class="res-table">
+                            <thead>
+                                <tr>
+                                    <th class="pl-10">NO</th>
+                                    <th>후보자 성명</th>
+                                    <th>나이/성별</th>
+                                    <th>최종학력 / 전공</th>
+                                    <th>총 경력</th>
+                                    <th>최종회사 / 현재직무</th>
+                                    <th>적합도</th>
+                                    <th class="pr-10">AI 분석 리포트</th>
+                                </tr>
+                            </thead>
+                            <tbody id="data-rows">
+                                <tr><td colspan="8" class="text-center py-24 text-slate-400 font-bold italic">데이터를 불러오는 중입니다...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-기본적인 사무 관리 스킬
-엑셀, 워드 등 기본적인 오피스 프로그램 사용 능력
+    <!-- Modal: Analysis Detail -->
+    <div id="detail-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6 md:p-10">
+        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-xl" onclick="closeDetail()"></div>
+        <div class="bg-white w-full h-full max-w-7xl rounded-[4rem] shadow-2xl relative z-10 overflow-hidden flex flex-col md:flex-row border border-white/10">
+            <!-- Preview Section -->
+            <div class="w-full md:w-[55%] bg-slate-100 border-r border-slate-200 flex flex-col">
+                <div class="p-8 bg-white border-b border-slate-200 flex items-center justify-between">
+                    <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Original Document Viewer</span>
+                </div>
+                <div class="flex-1 overflow-auto flex justify-center p-6 bg-slate-200/50">
+                    <img id="viewer-img" class="max-w-full h-fit shadow-2xl rounded-sm hidden">
+                    <iframe id="viewer-pdf" class="w-full h-full hidden rounded-xl shadow-2xl border-none"></iframe>
+                    <div id="viewer-empty" class="flex flex-col items-center justify-center text-slate-400 h-full">
+                        <i class="fas fa-file-excel text-4xl mb-4 opacity-20"></i>
+                        <p class="italic text-sm font-bold">미리보기를 불러올 수 없습니다.</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Analysis Section -->
+            <div class="w-full md:w-[45%] flex flex-col bg-white">
+                <div class="p-10 border-b border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-5">
+                        <div id="det-score" class="score-badge !w-16 !h-16 !text-lg !rounded-2xl"></div>
+                        <div>
+                            <h3 id="det-name" class="text-3xl font-black text-slate-900">분석 결과</h3>
+                            <p id="det-sub" class="text-xs font-bold text-indigo-500 uppercase mt-1"></p>
+                        </div>
+                    </div>
+                    <button onclick="closeDetail()" class="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-slate-100 transition-colors">
+                        <i class="fas fa-times text-xl text-slate-400"></i>
+                    </button>
+                </div>
+                <div class="p-10 overflow-y-auto custom-scroll space-y-10 flex-1">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-quote-left text-indigo-200 text-xl"></i>
+                            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">AI SUMMARY</h4>
+                        </div>
+                        <div id="det-summary" class="text-base font-bold text-slate-700 leading-relaxed"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="p-8 bg-emerald-50 rounded-[2.5rem] border border-emerald-100 relative overflow-hidden group">
+                            <i class="fas fa-check-circle absolute -right-4 -bottom-4 text-8xl text-emerald-500/5 group-hover:scale-110 transition-transform"></i>
+                            <h4 class="text-[10px] font-black text-emerald-600 uppercase mb-3 tracking-widest">Core Strengths</h4>
+                            <p id="det-reason" class="text-sm font-bold text-slate-600 leading-loose relative z-10"></p>
+                        </div>
+                        <div class="p-8 bg-rose-50 rounded-[2.5rem] border border-rose-100 relative overflow-hidden group">
+                            <i class="fas fa-exclamation-triangle absolute -right-4 -bottom-4 text-8xl text-rose-500/5 group-hover:scale-110 transition-transform"></i>
+                            <h4 class="text-[10px] font-black text-rose-600 uppercase mb-3 tracking-widest">Risk Factors</h4>
+                            <p id="det-penalty" class="text-sm font-bold text-slate-600 leading-loose relative z-10"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-소통 및 협업 능력
-다양한 부서와 협력하며 원활한 커뮤니케이션을 할 수 있는 분
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-자기 주도적 업무 처리 능력
-주어진 업무를 책임감 있게 처리하고, 필요한 업무를 주도적으로 제안하고 해결할 수 있는 능력
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'est-ai-v72';
+        const apiKey = "";
 
+        let user = null;
+        let fileQueue = [];
+        let analyses = [];
 
+        // Auth Logic
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) { console.error("Auth error:", err); }
+        };
 
-✔ 이런 역량이 있으면 더욱 좋습니다
-업무 프로세스 개선 경험
-기존 업무 프로세스를 분석하고 개선한 경험이 있는 분
+        onAuthStateChanged(auth, (u) => {
+            user = u;
+            if (u) {
+                document.getElementById('op-id').innerText = u.uid;
+                listenData();
+            }
+        });
 
-사내 시설 및 비품 관리 경험
-사무실 내 비품, 장비, 시설 관리 경험이 있는 분
+        initAuth();
 
-서비스 마인드와 고객 지향적 태도
-내부 직원들에 대한 서비스를 제공하며 친절하고 효율적인 대응이 가능한 분
+        // UI Handlers
+        document.getElementById('files').addEventListener('change', (e) => {
+            fileQueue = [...fileQueue, ...Array.from(e.target.files)];
+            renderQueue();
+        });
 
-유연한 사고와 문제 해결 능력
-예기치 못한 상황에서 유연하게 대응하고 빠르게 문제를 해결할 수 있는 능력
+        function renderQueue() {
+            const list = document.getElementById('queue-list');
+            const count = document.getElementById('queue-count');
+            count.innerText = `${fileQueue.length} FILES`;
+            list.innerHTML = fileQueue.length ? fileQueue.map((f, i) => `
+                <div class="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <i class="fas fa-file-alt text-indigo-400"></i>
+                        <span class="truncate text-white/80 font-bold">${f.name}</span>
+                    </div>
+                    <button onclick="window.removeFile(${i})" class="text-white/20 hover:text-rose-400 transition-colors"><i class="fas fa-times-circle"></i></button>
+                </div>
+            `).join('') : "분석할 파일을 선택해주세요.";
+        }
+        window.removeFile = (i) => { fileQueue.splice(i, 1); renderQueue(); };
+
+        window.startProcessing = async () => {
+            if (!user) return;
+            if (!fileQueue.length) { alert("이력서 파일을 선택해주세요."); return; }
+            
+            const jd = document.getElementById('jd-text').value;
+            if (!jd.trim()) { alert("분석 기준이 될 채용 공고(JD)를 입력해주세요."); return; }
+
+            const overlay = document.getElementById('loading-overlay');
+            const status = document.getElementById('loading-status');
+            overlay.classList.add('active');
+
+            for (let i = 0; i < fileQueue.length; i++) {
+                const file = fileQueue[i];
+                status.innerText = `[${i+1}/${fileQueue.length}] ${file.name} 분석 중...`;
+                
+                try {
+                    const b64 = await fileToBase64(file);
+                    const aiRes = await callAI(jd, file.type, b64);
+                    
+                    if (aiRes) {
+                        // RULE 1: Strict Paths
+                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'resumes'), {
+                            ...aiRes,
+                            originalFile: b64,
+                            mimeType: file.type,
+                            fileName: file.name,
+                            timestamp: serverTimestamp(),
+                            userId: user.uid
+                        });
+                    }
+                } catch (e) { console.error(`Analysis failed for ${file.name}:`, e); }
+            }
+            
+            overlay.classList.remove('active');
+            fileQueue = []; renderQueue(); 
+            switchTab('list');
+        };
+
+        const fileToBase64 = (f) => new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.readAsDataURL(f); });
+
+        async function callAI(jd, mime, b64) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            // 프롬프트 대폭 강화: 데이터 추출 실패 방지 및 레이아웃 무시하고 텍스트 정밀 탐색
+            const prompt = `당신은 대한민국 최고의 HR 전문가이자 AI 채용 분석기입니다. 
+다음 제공된 [JD]와 [이력서 파일]을 정밀 분석하여 결과를 JSON 형식으로만 응답하세요.
+
+[JD(채용공고)]
+${jd}
+
+[분석 지침]
+1. 이력서 파일(이미지/PDF)에서 성명, 나이, 성별, 학력, 경력 정보를 끝까지 찾아내세요. 
+2. 특정 항목이 명시되지 않았다면 '미상' 또는 '정보 없음'으로 표시하되, 나이의 경우 생년월일을 통해 현재 나이로 환산하세요.
+3. 'score'는 JD와의 기술 스택 및 경력 일치도를 0~100점 사이로 산출하세요.
+4. 'summary'는 지원자의 핵심 역량을 3줄 이내로 요약하세요.
+5. 반드시 아래 JSON 스키마를 엄격히 준수하세요. 텍스트 설명 없이 JSON만 출력하세요.
+
+{
+  "name": "성명(문자열)",
+  "gender": "성별(남성/여성/미상)",
+  "age": "나이(예: 36세 (1988년생) 또는 미상)",
+  "education": "최종학력 및 전공(예: 대학교/전공)",
+  "career": "총 경력 기간(예: 약 7년)",
+  "lastCompany": "최종회사 및 현재직무",
+  "score": "숫자(0-100)",
+  "summary": "AI 요약 텍스트",
+  "reason": "추천 사유(강점)",
+  "penalty": "부족한 점(리스크)"
+}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ 
+                            parts: [
+                                { text: prompt }, 
+                                { inlineData: { mimeType: mime.includes('pdf') ? 'application/pdf' : 'image/jpeg', data: b64 } }
+                            ] 
+                        }],
+                        generationConfig: { 
+                            responseMimeType: "application/json",
+                            temperature: 0.2 // 정확도 향상을 위해 낮춤
+                        }
+                    })
+                });
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                return JSON.parse(jsonText);
+            } catch (e) { 
+                console.error("Gemini API Error:", e);
+                return {
+                    name: "분석 오류",
+                    gender: "-",
+                    age: "-",
+                    education: "파일 파싱 실패",
+                    career: "-",
+                    lastCompany: "-",
+                    score: 0,
+                    summary: "AI가 파일에서 텍스트를 추출하지 못했습니다. 파일 형식이나 내용을 확인해주세요.",
+                    reason: "-",
+                    penalty: "데이터 추출 실패"
+                };
+            }
+        }
+
+        function listenData() {
+            if (!user) return;
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'resumes');
+            
+            onSnapshot(colRef, (snap) => {
+                analyses = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                renderTable();
+            }, (err) => {
+                console.error("Firestore Listen Error:", err);
+            });
+        }
+
+        function renderTable() {
+            const rows = document.getElementById('data-rows');
+            if (analyses.length === 0) {
+                rows.innerHTML = `<tr><td colspan="8" class="text-center py-24 text-slate-400 font-bold italic">분석된 데이터가 없습니다. 이력서를 업로드해 주세요.</td></tr>`;
+                return;
+            }
+            rows.innerHTML = analyses.map((r, i) => `
+                <tr class="group hover:bg-indigo-50/30 transition-all cursor-pointer border-b border-slate-100" onclick="window.showDetail('${r.id}')">
+                    <td class="pl-10 text-slate-300 font-bold text-xs">${analyses.length - i}</td>
+                    <td class="py-6">
+                        <div class="font-black text-slate-900">${r.name || '정보 없음'}</div>
+                    </td>
+                    <td class="text-slate-500 font-bold text-xs">${r.age || '-'} / ${r.gender || '-'}</td>
+                    <td class="font-bold text-indigo-600 text-xs leading-relaxed max-w-[200px]">${r.education || '-'}</td>
+                    <td class="text-slate-700 font-black text-xs">${r.career || '-'}</td>
+                    <td class="text-slate-400 font-bold text-xs max-w-[200px] truncate">${r.lastCompany || '-'}</td>
+                    <td>
+                        <div class="score-badge ${r.score >= 80 ? 'score-high' : r.score >= 40 ? 'score-mid' : 'score-low'}">${r.score || 0}</div>
+                    </td>
+                    <td class="pr-10">
+                        <button class="px-6 py-2.5 bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white rounded-xl text-[11px] font-black text-slate-500 transition-all">VIEW REPORT</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.showDetail = (id) => {
+            const d = analyses.find(x => x.id === id);
+            if (!d) return;
+            
+            document.getElementById('det-score').innerText = d.score || 0;
+            document.getElementById('det-score').className = `score-badge !w-16 !h-16 !text-lg !rounded-2xl ${d.score >= 80 ? 'score-high' : d.score >= 40 ? 'score-mid' : 'score-low'}`;
+            document.getElementById('det-name').innerText = d.name || '정보 없음';
+            document.getElementById('det-sub').innerText = `${d.age || '-'} | ${d.gender || '-'} | ${d.career || '-'}`;
+            document.getElementById('det-summary').innerText = d.summary || '분석된 요약 내용이 없습니다.';
+            document.getElementById('det-reason').innerText = d.reason || '정보 없음';
+            document.getElementById('det-penalty').innerText = d.penalty || '정보 없음';
+
+            const img = document.getElementById('viewer-img');
+            const pdf = document.getElementById('viewer-pdf');
+            const empty = document.getElementById('viewer-empty');
+            img.classList.add('hidden'); pdf.classList.add('hidden'); empty.classList.add('hidden');
+
+            if (d.originalFile) {
+                if (d.mimeType?.includes('pdf')) {
+                    pdf.src = `data:application/pdf;base64,${d.originalFile}`;
+                    pdf.classList.remove('hidden');
+                } else {
+                    img.src = `data:${d.mimeType || 'image/jpeg'};base64,${d.originalFile}`;
+                    img.classList.remove('hidden');
+                }
+            } else {
+                empty.classList.remove('hidden');
+            }
+
+            document.getElementById('detail-modal').classList.remove('hidden');
+        };
+
+        window.closeDetail = () => {
+            document.getElementById('detail-modal').classList.add('hidden');
+            document.getElementById('viewer-pdf').src = ""; // Stop PDF sound/loading
+        };
+
+        window.switchTab = (t) => {
+            document.getElementById('view-upload').classList.toggle('hidden', t !== 'upload');
+            document.getElementById('view-list').classList.toggle('hidden', t !== 'list');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-tab'));
+            document.getElementById(`tab-${t}`).classList.add('active-tab');
+            document.getElementById('header-title').innerText = t === 'upload' ? '이력서 업로드' : '인재 분석 데이터';
+            document.getElementById('header-sub').innerText = t === 'upload' ? 'JD 기준 기술/경력 일치도 계산' : '공고(JD) 내용과 이력서의 기술/경력 일치도를 리포트합니다.';
+        };
+    </script>
+</body>
+</html>
